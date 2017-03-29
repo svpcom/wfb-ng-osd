@@ -94,7 +94,8 @@ void displayGraphics(void) {
     vgImageSubData(img, (void *)video_buf, dstride, rgbaFormat, 0, 0, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
     vgLoadIdentity();
-    vgTranslate(0, 0);
+    vgTranslate((1.0 - screen_scale/screen_scale_x) / 2.0 * ogl_state.screen_width,
+                (1.0 - screen_scale/screen_scale_y) / 2.0 * ogl_state.screen_height);
     vgScale(screen_scale, screen_scale);
     vgDrawImage(img);
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
