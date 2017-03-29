@@ -19,19 +19,17 @@
  * Tau Labs - Brain FPV Flight Controller(https://github.com/BrainFPV/TauLabs)
  */
 
-#include "bcm_host.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <bcm_host.h>
 #include "VG/openvg.h"
 #include "VG/vgu.h"
-#include "fontinfo.h"
-#include "shapes.h"
 #include <math.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <stdio.h>
+#include "eglstate.h"
 
 #include "graphengine.h"
 #include "math3d.h"
@@ -40,13 +38,16 @@
 #include "font8x10.h"
 
 
-int screen_width = 0, screen_height = 0;
 static uint8_t* video_buf = NULL;
+STATE_T ogl_state;
 
+void render_init()
+{
+    bcm_host_init();
+    memset(&ogl_state, 0, sizeof(ogl_state));
+    oglinit(&ogl_state);
 
-void render_init() {
-    init(&screen_width, &screen_height);
-    printf("Screen HW %dx%d, virtual %dx%d \n", screen_width, screen_height, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
+    printf("Screen HW %dx%d, virtual %dx%d \n", ogl_state.screen_width, ogl_state.screen_height, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
     video_buf = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
 }
 
@@ -55,13 +56,39 @@ void clearGraphics(void) {
 }
 
 void displayGraphics(void) {
-    Start(screen_width, screen_height);
+    VGfloat color1[4] = { 255, 255, 255, 0 };
+    VGfloat color2[4] = { 0, 0, 0, 0 };
 
+    vgSetfv(VG_CLEAR_COLOR, 4, color1);
+    vgClear(0, 0, ogl_state.screen_width, ogl_state.screen_height);
+
+    // set fill
+    VGPaint fillPaint = vgCreatePaint();
+    vgSetParameteri(fillPaint, VG_PAINT_TYPE, VG_PAINT_TYPE_COLOR);
+    vgSetParameterfv(fillPaint, VG_PAINT_COLOR, 4, color2);
+    vgSetPaint(fillPaint, VG_FILL_PATH);
+    vgDestroyPaint(fillPaint);
+
+    // set stroke
+    VGPaint strokePaint = vgCreatePaint();
+    vgSetParameteri(strokePaint, VG_PAINT_TYPE, VG_PAINT_TYPE_COLOR);
+    vgSetParameterfv(strokePaint, VG_PAINT_COLOR, 4, color2);
+    vgSetPaint(strokePaint, VG_STROKE_PATH);
+    vgDestroyPaint(strokePaint);
+
+    // set stroke width
+    vgSetf(VG_STROKE_LINE_WIDTH, 0);
+    vgSeti(VG_STROKE_CAP_STYLE, VG_CAP_BUTT);
+    vgSeti(VG_STROKE_JOIN_STYLE, VG_JOIN_MITER);
+
+    vgLoadIdentity();
+
+    // convert video buffer into image
     unsigned int dstride = GRAPHICS_WIDTH * 4;
     VGImageFormat rgbaFormat = VG_sABGR_8888;
     VGImage img = vgCreateImage(rgbaFormat, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, VG_IMAGE_QUALITY_BETTER);
-    float screen_scale_x = (float)screen_width / GRAPHICS_WIDTH;
-    float screen_scale_y = (float)screen_height / GRAPHICS_HEIGHT;
+    float screen_scale_x = (float)ogl_state.screen_width / GRAPHICS_WIDTH;
+    float screen_scale_y = (float)ogl_state.screen_height / GRAPHICS_HEIGHT;
     float screen_scale = MIN(screen_scale_x, screen_scale_y);
 
     vgImageSubData(img, (void *)video_buf, dstride, rgbaFormat, 0, 0, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
@@ -72,7 +99,11 @@ void displayGraphics(void) {
     vgDrawImage(img);
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
     vgDestroyImage(img);
-    End();
+
+    // display
+    assert(vgGetError() == VG_NO_ERROR);
+    eglSwapBuffers(ogl_state.display, ogl_state.surface);
+    assert(eglGetError() == EGL_SUCCESS);
 }
 
 //void drawArrow(uint16_t x, uint16_t y, uint16_t angle, uint16_t size_quarter)
