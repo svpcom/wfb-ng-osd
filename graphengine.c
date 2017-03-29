@@ -34,44 +34,43 @@
 #include <stdio.h>
 
 #include "graphengine.h"
-//#include "osdcore.h"
+#include "math3d.h"
 #include "fonts.h"
 #include "font12x18.h"
 #include "font8x10.h"
 
 
-int screen_width = 0, screen_height = 0, screen_scale = 2;
+int screen_width = 0, screen_height = 0;
 static uint8_t* video_buf = NULL;
 
 
 void render_init() {
     init(&screen_width, &screen_height);
-    printf("Screen %dx%d\n", screen_width, screen_height);
-    assert(screen_width % screen_scale == 0 && screen_height % screen_scale == 0);
-    video_buf = malloc(screen_width * screen_height * 4); // ARGB
+    printf("Screen HW %dx%d, virtual %dx%d \n", screen_width, screen_height, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
+    video_buf = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
 }
 
 void clearGraphics(void) {
-    memset(video_buf, 0, screen_width * screen_height * 4);
+    memset(video_buf, '\0', GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
 }
 
 void displayGraphics(void) {
     Start(screen_width, screen_height);
-//    makeimage(0, 0, screen_width, screen_height, video_buf);
 
-    unsigned int dstride = screen_width * 4;
+    unsigned int dstride = GRAPHICS_WIDTH * 4;
     VGImageFormat rgbaFormat = VG_sABGR_8888;
-    VGImage img = vgCreateImage(rgbaFormat, screen_width, screen_height, VG_IMAGE_QUALITY_BETTER);
-    vgImageSubData(img, (void *)video_buf, dstride, rgbaFormat, 0, 0, screen_width, screen_height);
+    VGImage img = vgCreateImage(rgbaFormat, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, VG_IMAGE_QUALITY_BETTER);
+    float screen_scale_x = (float)screen_width / GRAPHICS_WIDTH;
+    float screen_scale_y = (float)screen_height / GRAPHICS_HEIGHT;
+    float screen_scale = MIN(screen_scale_x, screen_scale_y);
 
+    vgImageSubData(img, (void *)video_buf, dstride, rgbaFormat, 0, 0, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
     vgLoadIdentity();
-    vgTranslate(50, 0);
-    vgScale(0.8, 1);
+    vgTranslate(0, 0);
+    vgScale(screen_scale, screen_scale);
     vgDrawImage(img);
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
-    //vgSetPixels(0, 0, img, 0, 0, screen_width, screen_height);
-
     vgDestroyImage(img);
     End();
 }
@@ -111,35 +110,24 @@ void inline write_pixel_lm(int x, int y, int mmode, int lmode){
     CHECK_COORDS(x, y);
     assert(mmode < 2 && lmode < 2);
 
-    int x1 = x * screen_scale;
-    int x2 = x1 + screen_scale;
-    int y1 = y * screen_scale;
-    int y2 = y1 + screen_scale;
-
     uint8_t mode = (mmode << 1) | lmode;
+    uint32_t *ptr = ((uint32_t*)video_buf) + GRAPHICS_WIDTH * (GRAPHICS_HEIGHT - y - 1) + x;
 
-    for(int sx = x1; sx < x2; sx++)
+    switch(mode)
     {
-        for(int sy = y1; sy < y2; sy++)
-        {
-            uint32_t *ptr = ((uint32_t*)video_buf) + screen_width * (screen_height - sy - 1) + sx;
-
-            switch(mode)
-            {
-            case 0: //transparent
-            case 1: //transparent
-                *ptr = 0u;
-                break;
-            case 2: //black
-                *ptr = 0xff000000u;
-                break;
-            case 3: //white
-                *ptr = 0xffffffffu;
-                break;
-            }
-        }
+    case 0: //transparent
+    case 1: //transparent
+        *ptr = 0u;
+        break;
+    case 2: //black
+        *ptr = 0xff000000u;
+        break;
+    case 3: //white
+        *ptr = 0xffffffffu;
+        break;
     }
 }
+
 
 /**
  * write_hline_lm: write both level and mask buffers.
@@ -747,7 +735,7 @@ void write_string(char *str, int x, int y, int xs, int ys, int va, int ha, int f
       yy += ys + font_info.height;
       xx  = xx_original;
     } else {
-      if (xx >= 0 && xx < GRAPHICS_WIDTH_REAL) {
+      if (xx >= GRAPHICS_LEFT && xx < GRAPHICS_RIGHT) {
         if (font_info.id < 2) {
           write_char(*str, xx, yy, flags, font);
         } else {

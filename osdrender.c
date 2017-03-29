@@ -31,8 +31,6 @@
 #include "math3d.h"
 #include "px4_custom_mode.h"
 
-#include "telemetry.h"
-
 #define R2D     57.295779513082320876798154814105f                                      //180/PI
 #define D2R     0.017453292519943295769236907684886f                                    //PI/180
 
@@ -45,10 +43,10 @@ int32_t test_alt, test_speed, test_throttle;
 const int SIZE_TO_FONT[3] = { 2, 0, 3 };
 
 uint8_t last_panel = 1;
-int32_t new_panel_start_time = 0;
+uint64_t new_panel_start_time = 0;
 
 uint8_t last_warn_type = 0;
-int32_t last_warn_time = 0;
+uint64_t last_warn_time = 0;
 char* warn_str = "";
 
 const char METRIC_SPEED[] = "KM/H";         //kilometer per hour
@@ -78,6 +76,7 @@ uint64_t GetSystimeMS(void) {
 
 void osd_init(void)
 {
+    sys_start_time = GetSystimeMS();
     render_init();
     atti_mp_scale = (float)osd_params.Atti_mp_scale_real + (float)osd_params.Atti_mp_scale_frac * 0.01;
     atti_3d_scale = (float)osd_params.Atti_3D_scale_real + (float)osd_params.Atti_3D_scale_frac * 0.01;
@@ -124,7 +123,7 @@ bool enabledAndShownOnPanel(uint16_t enabled, uint16_t panel) {
 }
 
 
-void render(telemetry_data_t *td) {
+void render() {
     clearGraphics();
     RenderScreen();
     displayGraphics();

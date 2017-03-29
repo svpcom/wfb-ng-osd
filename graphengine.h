@@ -6,36 +6,6 @@
 // Size of an array (num items.)
 #define SIZEOF_ARRAY(x) (sizeof(x) / sizeof((x)[0]))
 
-#define GRAPHICS_WIDTH_REAL  376
-#define BUFFER_WIDTH         (GRAPHICS_WIDTH_REAL / 8 + 1)
-
-// Macros for computing addresses and bit positions.
-#define CALC_BUFF_ADDR(x, y) (((x) / 8) + ((y) * BUFFER_WIDTH))
-#define CALC_BIT_IN_WORD(x)  ((x) & 7)
-/* #define DEBUG_DELAY */
-/* // Macro for writing a word with a mode (NAND = clear, OR = set, XOR = toggle) */
-/* // at a given position */
-/* #define WRITE_WORD_MODE(buff, addr, mask, mode) \ */
-/*   switch (mode) { \ */
-/*   case 0: buff[addr] &= ~mask; break; \ */
-/*   case 1: buff[addr] |= mask; break; \ */
-/*   case 2: buff[addr] ^= mask; break; } */
-
-/* #define WRITE_WORD_NAND(buff, addr, mask) { buff[addr] &= ~mask; DEBUG_DELAY; } */
-/* #define WRITE_WORD_OR(buff, addr, mask)   { buff[addr] |= mask; DEBUG_DELAY; } */
-/* #define WRITE_WORD_XOR(buff, addr, mask)  { buff[addr] ^= mask; DEBUG_DELAY; } */
-
-/* // Horizontal line calculations. */
-/* // Edge cases. */
-/* #define COMPUTE_HLINE_EDGE_L_MASK(b)      ((1 << (8 - (b))) - 1) */
-/* #define COMPUTE_HLINE_EDGE_R_MASK(b)      (~((1 << (7 - (b))) - 1)) */
-/* // This computes an island mask. */
-/* #define COMPUTE_HLINE_ISLAND_MASK(b0, b1) (COMPUTE_HLINE_EDGE_L_MASK(b0) ^ COMPUTE_HLINE_EDGE_L_MASK(b1)); */
-
-// Macro for initializing stroke/fill modes. Add new modes here
-// if necessary.
-
-extern int screen_width, screen_height, screen_scale;
 
 #define SETUP_STROKE_FILL(stroke, fill, mode)   \
     stroke = 0; fill = 0;                       \
@@ -70,13 +40,6 @@ extern int screen_width, screen_height, screen_scale;
     write_pixel_lm((cx) + (x), (cy) - (y), mode, lmode); \
     write_pixel_lm((cx) - (x), (cy) - (y), mode, lmode);
 
-/* // Macros for writing pixels in a upper arc algorithm. */
-/* #define UPPER_ARC_PLOT_8(buff, cx, cy, x, y, x1, x2, mode) \ */
-/*   UPPER_ARC_PLOT_4(buff, cx, cy, x, y, x1, x2, mode); \ */
-/*   if ((x) != (y)) { UPPER_ARC_PLOT_4(buff, cx, cy, y, x, x1, x2, mode); } */
-/* #define UPPER_ARC_PLOT_4(buff, cx, cy, x, y, x1, x2, mode) \ */
-/*   if (((cx) - (x)) > x1) write_pixel(buff, (cx) + (x), (cy) - (y), mode); \ */
-/*   if (((cx) + (x)) < x2) write_pixel(buff, (cx) - (x), (cy) - (y), mode); */
 
 // Font flags.
 #define FONT_BOLD      1               // bold text (no outline)
@@ -128,13 +91,19 @@ typedef struct {
 #define MIN3(a, b, c)                MIN(a, MIN(b, c))
 #define LIMIT(x, l, h)               MAX(l, MIN(x, h))
 
-#define GRAPHICS_LEFT 0
-#define GRAPHICS_TOP 0
-#define GRAPHICS_RIGHT          (screen_width / screen_scale - 1)
-#define GRAPHICS_BOTTOM         (screen_height / screen_scale - 1)
 
-#define GRAPHICS_X_MIDDLE       ((GRAPHICS_RIGHT + 1) / 2)
-#define GRAPHICS_Y_MIDDLE       ((GRAPHICS_BOTTOM + 1) / 2)
+extern int screen_width, screen_height;
+
+// PAL
+#define GRAPHICS_WIDTH         360
+#define GRAPHICS_HEIGHT        288
+#define GRAPHICS_LEFT          0
+#define GRAPHICS_TOP           0
+#define GRAPHICS_RIGHT         (GRAPHICS_WIDTH - 1)
+#define GRAPHICS_BOTTOM        (GRAPHICS_HEIGHT - 1)
+
+#define GRAPHICS_X_MIDDLE      (GRAPHICS_WIDTH  / 2)
+#define GRAPHICS_Y_MIDDLE      (GRAPHICS_HEIGHT / 2)
 
 // Check if coordinates are valid. If not, return. Assumes signed coordinates for working correct also with values lesser than 0.
 #define CHECK_COORDS(x, y)           if (x < GRAPHICS_LEFT || x > GRAPHICS_RIGHT || y < GRAPHICS_TOP || y > GRAPHICS_BOTTOM) { return; }
@@ -169,11 +138,7 @@ void write_vline_outlined(int x, int y0, int y1, int endcap0, int endcap1, int m
 void write_filled_rectangle_lm(int x, int y, int width, int height, int lmode, int mmode);
 void write_rectangle_outlined(int x, int y, int width, int height, int mode, int mmode);
 
-void write_circle(uint8_t *buff, int cx, int cy, int r, int dashp, int mode);
 void write_circle_outlined(int cx, int cy, int r, int dashp, int bmode, int mode, int mmode);
-/* void write_upper_arc_outlined(int cx, int cy, int r, int x1, int x2, int dashp, int bmode, int mode, int mmode); */
-/* void write_circle_filled(uint8_t *buff, int cx, int cy, int r, int mode); */
-/* void write_circle_filled1(int cx, int cy, int r, int mode); */
 
 void write_line_lm(int x0, int y0, int x1, int y1, int mmode, int lmode);
 void write_line_outlined(int x0, int y0, int x1, int y1, int endcap0, int endcap1, int mode, int mmode);
@@ -182,16 +147,10 @@ void write_line_outlined_dashed(int x0, int y0, int x1, int y1, int endcap0, int
 void write_triangle_filled(int x0, int y0, int x1, int y1, int x2, int y2);
 void write_triangle_wire(int x0, int y0, int x1, int y1, int x2, int y2);
 
-/* void write_word_misaligned(uint8_t *buff, uint16_t word, unsigned int addr, unsigned int xoff, int mode); */
-/* void write_word_misaligned_NAND(uint8_t *buff, uint16_t word, unsigned int addr, unsigned int xoff); */
-/* void write_word_misaligned_OR(uint8_t *buff, uint16_t word, unsigned int addr, unsigned int xoff); */
-/* void write_word_misaligned_lm(uint16_t wordl, uint16_t wordm, unsigned int addr, unsigned int xoff, int lmode, int mmode); */
-
-/* void write_char16(char ch, int x, int y, int font); */
-/* void write_char(char ch, int x, int y, int flags, int font); */
+void write_char16(char ch, int x, int y, int font);
+void write_char(char ch, int x, int y, int flags, int font);
 
 void write_string(char *str, int x, int y, int xs, int ys, int va, int ha, int flags, int font);
-
 
 int fetch_font_info(uint8_t ch, int font, struct FontEntry *font_info, char *lookup);
 void calc_text_dimensions(char *str, struct FontEntry font, int xs, int ys, struct FontDimensions *dim);
