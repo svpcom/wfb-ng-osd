@@ -1,0 +1,6 @@
+This is a port of PlayuavOSD (https://github.com/TobiasBales/PlayuavOSD.git) to Raspberry Pi. 
+
+Changes:
+  * Added PX4 support
+  * Removed 3d and map (waypoints) mode
+

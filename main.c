@@ -1,3 +1,25 @@
+/*
+  Copyright (C) 2017 Vasily Evseenko <svpcom@p2ptech.org>
+  based on PlayuavOSD https://github.com/TobiasBales/PlayuavOSD.git
+*/
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
+
+
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
@@ -75,8 +97,7 @@ int main(int argc, char *argv[]) {
     {
         cur_ts = GetSystimeMS();
         uint64_t sleep_ts = render_ts > cur_ts ? render_ts - cur_ts : 0;
-        //printf("SLEEP %Lu\n", sleep_ts);
-        int rc = poll(fds, 1, sleep_ts); // 30 hz
+        int rc = poll(fds, 1, sleep_ts);
 
         if (rc < 0){
             if (errno == EINTR || errno == EAGAIN) continue;
@@ -103,11 +124,8 @@ int main(int argc, char *argv[]) {
         }
 
         cur_ts = GetSystimeMS();
-        //printf("R TS %Lu C TS %Lu\n", render_ts, cur_ts);
         if (render_ts <= cur_ts)
         {
-            //printf(".");
-            //fflush(stdout);
             render_ts = cur_ts + 1000 / 10; // 10 Hz max
             render();
         }
