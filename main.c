@@ -79,11 +79,12 @@ int main(int argc, char *argv[]) {
         int rc = poll(fds, 1, sleep_ts); // 30 hz
 
         if (rc < 0){
+            if (errno == EINTR || errno == EAGAIN) continue;
             perror("Poll error");
             exit(1);
         }
 
-        if (fds[0].revents & POLLERR)
+        if (fds[0].revents & (POLLERR | POLLNVAL))
         {
             fprintf(stderr, "socket error!");
             exit(1);
