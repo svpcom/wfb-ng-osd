@@ -23,7 +23,7 @@ extern uint64_t total_armed_time;
 extern float osd_vbat_A;                 // Battery A voltage in milivolt
 extern int16_t osd_curr_A;                 // Battery A current
 extern int8_t osd_battery_remaining_A;    // 0 to 100 <=> 0 to 1000
-extern float osd_curr_consumed_mah; // total current drawn since startup in amp-hours
+extern uint32_t osd_curr_consumed_mah; // total current drawn since startup in amp-hours
 
 extern float osd_pitch;                  // pitch from DCM
 extern float osd_roll;                   // roll from DCM

@@ -89,6 +89,7 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
 
             }
             break;
+
             case MAVLINK_MSG_ID_SYS_STATUS:
             {
                 osd_vbat_A = (mavlink_msg_sys_status_get_voltage_battery(&msg) / 1000.0f);                 //Battery voltage, in millivolts (1 = 1 millivolt)
@@ -98,6 +99,13 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 //osd_nav_mode = mav_system;//Debug
             }
             break;
+
+            case MAVLINK_MSG_ID_BATTERY_STATUS:
+            {
+                osd_curr_consumed_mah = mavlink_msg_battery_status_get_current_consumed(&msg);
+            }
+            break;
+
             case MAVLINK_MSG_ID_GPS_RAW_INT:
             {
                 osd_lat = mavlink_msg_gps_raw_int_get_lat(&msg);
@@ -107,6 +115,7 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 osd_satellites_visible = mavlink_msg_gps_raw_int_get_satellites_visible(&msg);
             }
             break;
+
             case MAVLINK_MSG_ID_GPS2_RAW:
             {
                 osd_lat2 = mavlink_msg_gps2_raw_get_lat(&msg);
@@ -116,6 +125,7 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 osd_satellites_visible2 = mavlink_msg_gps2_raw_get_satellites_visible(&msg);
             }
             break;
+
             case MAVLINK_MSG_ID_VFR_HUD:
             {
                 osd_airspeed = mavlink_msg_vfr_hud_get_airspeed(&msg);
@@ -143,6 +153,7 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 osd_yaw = Rad2Deg(mavlink_msg_attitude_get_yaw(&msg));
             }
             break;
+
             case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
             {
                 nav_roll = mavlink_msg_nav_controller_output_get_nav_roll(&msg);
@@ -155,11 +166,13 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 xtrack_error = mavlink_msg_nav_controller_output_get_xtrack_error(&msg);
             }
             break;
+
             case MAVLINK_MSG_ID_MISSION_CURRENT:
             {
                 wp_number = (uint8_t)mavlink_msg_mission_current_get_seq(&msg);
             }
             break;
+
             case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
             {
                 if (!osd_chan_cnt_above_eight)
@@ -176,6 +189,7 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 }
             }
             break;
+
             case MAVLINK_MSG_ID_RC_CHANNELS:
             {
                 osd_chan_cnt_above_eight = true;
