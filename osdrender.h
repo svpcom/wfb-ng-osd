@@ -26,7 +26,7 @@
 #include "graphengine.h"
 
 
-void osd_init();
+void osd_init(int shift_x, int shift_y, float scale_x, float scale_y);
 void render();
 
 

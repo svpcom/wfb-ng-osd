@@ -74,10 +74,10 @@ uint64_t GetSystimeMS(void) {
 }
 
 
-void osd_init(void)
+void osd_init(int shift_x, int shift_y, float scale_x, float scale_y)
 {
     sys_start_time = GetSystimeMS();
-    render_init();
+    render_init(shift_x, shift_y, scale_x, scale_y);
     atti_mp_scale = (float)osd_params.Atti_mp_scale_real + (float)osd_params.Atti_mp_scale_frac * 0.01;
     atti_3d_scale = (float)osd_params.Atti_3D_scale_real + (float)osd_params.Atti_3D_scale_frac * 0.01;
     atti_3d_min_clipX = osd_params.Atti_mp_posX - (uint32_t)(22 * atti_mp_scale);

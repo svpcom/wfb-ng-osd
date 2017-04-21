@@ -78,8 +78,20 @@ int main(int argc, char *argv[]) {
     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
     int fd;
     struct pollfd fds[1];
+    int shift_x = 0;
+    int shift_y = 0;
+    float scale_x = 1.0;
+    float scale_y = 1.0;
 
-    osd_init();
+    if (argc == 5)
+    {
+        shift_x = atoi(argv[1]);
+        shift_y = atoi(argv[2]);
+        scale_x = strtof(argv[3], NULL);
+        scale_y = strtof(argv[4], NULL);
+    }
+
+    osd_init(shift_x, shift_y, scale_x, scale_y);
 
     memset(fds, '\0', sizeof(fds));
     fd = open_udp_socket_for_rx(14550);

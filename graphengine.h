@@ -120,7 +120,7 @@ extern int screen_width, screen_height;
 
 uint8_t getCharData(uint16_t charPos);
 
-void render_init();
+void render_init(int shift_x, int shift_y, float scale_x, float scale_y);
 void clearGraphics(void);
 void displayGraphics(void);
 

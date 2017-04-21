@@ -46,13 +46,20 @@
 static uint8_t* video_buf = NULL;
 STATE_T ogl_state;
 
-void render_init()
+static int corr_x, corr_y;
+static float corr_scale_x, corr_scale_y;
+
+void render_init(int shift_x, int shift_y, float scale_x, float scale_y)
 {
     bcm_host_init();
     memset(&ogl_state, 0, sizeof(ogl_state));
     oglinit(&ogl_state);
+    corr_x = shift_x;
+    corr_y = shift_y;
+    corr_scale_x = scale_x;
+    corr_scale_y = scale_y;
 
-    printf("Screen HW %dx%d, virtual %dx%d \n", ogl_state.screen_width, ogl_state.screen_height, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
+    fprintf(stderr, "Screen HW %dx%d, virtual %dx%d, corr %d, %d, %f, %f \n", ogl_state.screen_width, ogl_state.screen_height, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, corr_x, corr_y, corr_scale_x, corr_scale_y);
     video_buf = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
 }
 
@@ -92,15 +99,15 @@ void displayGraphics(void) {
     unsigned int dstride = GRAPHICS_WIDTH * 4;
     VGImageFormat rgbaFormat = VG_sABGR_8888;
     VGImage img = vgCreateImage(rgbaFormat, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, VG_IMAGE_QUALITY_BETTER);
-    float screen_scale_x = (float)ogl_state.screen_width / GRAPHICS_WIDTH;
-    float screen_scale_y = (float)ogl_state.screen_height / GRAPHICS_HEIGHT;
+    float screen_scale_x = (float)ogl_state.screen_width / GRAPHICS_WIDTH * corr_scale_x;
+    float screen_scale_y = (float)ogl_state.screen_height / GRAPHICS_HEIGHT * corr_scale_y;
     float screen_scale = MIN(screen_scale_x, screen_scale_y);
 
     vgImageSubData(img, (void *)video_buf, dstride, rgbaFormat, 0, 0, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
     vgLoadIdentity();
-    vgTranslate((1.0 - screen_scale/screen_scale_x) / 2.0 * ogl_state.screen_width,
-                (1.0 - screen_scale/screen_scale_y) / 2.0 * ogl_state.screen_height);
+    vgTranslate((1.0 - screen_scale/screen_scale_x) / 2.0 * ogl_state.screen_width  + corr_x,
+                (1.0 - screen_scale/screen_scale_y) / 2.0 * ogl_state.screen_height + corr_y);
     vgScale(screen_scale, screen_scale);
     vgDrawImage(img);
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
