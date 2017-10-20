@@ -19,8 +19,6 @@
 #include "bcm_host.h"
 #include "VG/openvg.h"
 #include "VG/vgu.h"
-#include "fontinfo.h"
-#include "shapes.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include "graphengine.h"
