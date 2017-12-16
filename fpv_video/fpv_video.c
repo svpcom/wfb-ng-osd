@@ -205,8 +205,8 @@ static int video_decode_test()
 
       // wait for EOS from render
       ilclient_wait_for_event(video_render, OMX_EventBufferFlag, 90, 0, OMX_BUFFERFLAG_EOS, 0,
-                              ILCLIENT_BUFFER_FLAG_EOS, -1);
-                              //ILCLIENT_BUFFER_FLAG_EOS, 10000);
+                              //ILCLIENT_BUFFER_FLAG_EOS, -1);
+                              ILCLIENT_BUFFER_FLAG_EOS, 10000);
 
       // need to flush the renderer to allow video_decode to disable its input port
       ilclient_flush_tunnels(tunnel, 0);
