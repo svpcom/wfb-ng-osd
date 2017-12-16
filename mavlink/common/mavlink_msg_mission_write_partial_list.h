@@ -26,20 +26,20 @@ typedef struct __mavlink_mission_write_partial_list_t {
     38, \
     "MISSION_WRITE_PARTIAL_LIST", \
     4, \
-    {  { "start_index", NULL, MAVLINK_TYPE_INT16_T, 0, 0, offsetof(mavlink_mission_write_partial_list_t, start_index) }, \
-         { "end_index", NULL, MAVLINK_TYPE_INT16_T, 0, 2, offsetof(mavlink_mission_write_partial_list_t, end_index) }, \
-         { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_mission_write_partial_list_t, target_system) }, \
+    {  { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_mission_write_partial_list_t, target_system) }, \
          { "target_component", NULL, MAVLINK_TYPE_UINT8_T, 0, 5, offsetof(mavlink_mission_write_partial_list_t, target_component) }, \
+         { "start_index", NULL, MAVLINK_TYPE_INT16_T, 0, 0, offsetof(mavlink_mission_write_partial_list_t, start_index) }, \
+         { "end_index", NULL, MAVLINK_TYPE_INT16_T, 0, 2, offsetof(mavlink_mission_write_partial_list_t, end_index) }, \
          } \
 }
 #else
 #define MAVLINK_MESSAGE_INFO_MISSION_WRITE_PARTIAL_LIST { \
     "MISSION_WRITE_PARTIAL_LIST", \
     4, \
-    {  { "start_index", NULL, MAVLINK_TYPE_INT16_T, 0, 0, offsetof(mavlink_mission_write_partial_list_t, start_index) }, \
-         { "end_index", NULL, MAVLINK_TYPE_INT16_T, 0, 2, offsetof(mavlink_mission_write_partial_list_t, end_index) }, \
-         { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_mission_write_partial_list_t, target_system) }, \
+    {  { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_mission_write_partial_list_t, target_system) }, \
          { "target_component", NULL, MAVLINK_TYPE_UINT8_T, 0, 5, offsetof(mavlink_mission_write_partial_list_t, target_component) }, \
+         { "start_index", NULL, MAVLINK_TYPE_INT16_T, 0, 0, offsetof(mavlink_mission_write_partial_list_t, start_index) }, \
+         { "end_index", NULL, MAVLINK_TYPE_INT16_T, 0, 2, offsetof(mavlink_mission_write_partial_list_t, end_index) }, \
          } \
 }
 #endif

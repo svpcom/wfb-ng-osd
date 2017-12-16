@@ -31,13 +31,13 @@ typedef struct __mavlink_landing_target_t {
     "LANDING_TARGET", \
     8, \
     {  { "time_usec", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_landing_target_t, time_usec) }, \
+         { "target_num", NULL, MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_landing_target_t, target_num) }, \
+         { "frame", NULL, MAVLINK_TYPE_UINT8_T, 0, 29, offsetof(mavlink_landing_target_t, frame) }, \
          { "angle_x", NULL, MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_landing_target_t, angle_x) }, \
          { "angle_y", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_landing_target_t, angle_y) }, \
          { "distance", NULL, MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_landing_target_t, distance) }, \
          { "size_x", NULL, MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_landing_target_t, size_x) }, \
          { "size_y", NULL, MAVLINK_TYPE_FLOAT, 0, 24, offsetof(mavlink_landing_target_t, size_y) }, \
-         { "target_num", NULL, MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_landing_target_t, target_num) }, \
-         { "frame", NULL, MAVLINK_TYPE_UINT8_T, 0, 29, offsetof(mavlink_landing_target_t, frame) }, \
          } \
 }
 #else
@@ -45,13 +45,13 @@ typedef struct __mavlink_landing_target_t {
     "LANDING_TARGET", \
     8, \
     {  { "time_usec", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_landing_target_t, time_usec) }, \
+         { "target_num", NULL, MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_landing_target_t, target_num) }, \
+         { "frame", NULL, MAVLINK_TYPE_UINT8_T, 0, 29, offsetof(mavlink_landing_target_t, frame) }, \
          { "angle_x", NULL, MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_landing_target_t, angle_x) }, \
          { "angle_y", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_landing_target_t, angle_y) }, \
          { "distance", NULL, MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_landing_target_t, distance) }, \
          { "size_x", NULL, MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_landing_target_t, size_x) }, \
          { "size_y", NULL, MAVLINK_TYPE_FLOAT, 0, 24, offsetof(mavlink_landing_target_t, size_y) }, \
-         { "target_num", NULL, MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_landing_target_t, target_num) }, \
-         { "frame", NULL, MAVLINK_TYPE_UINT8_T, 0, 29, offsetof(mavlink_landing_target_t, frame) }, \
          } \
 }
 #endif

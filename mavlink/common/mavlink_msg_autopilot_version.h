@@ -6,7 +6,7 @@
 MAVPACKED(
 typedef struct __mavlink_autopilot_version_t {
  uint64_t capabilities; /*< bitmask of capabilities (see MAV_PROTOCOL_CAPABILITY enum)*/
- uint64_t uid; /*< UID if provided by hardware*/
+ uint64_t uid; /*< UID if provided by hardware (see uid2)*/
  uint32_t flight_sw_version; /*< Firmware version number*/
  uint32_t middleware_sw_version; /*< Middleware version number*/
  uint32_t os_sw_version; /*< Operating system version number*/
@@ -36,16 +36,16 @@ typedef struct __mavlink_autopilot_version_t {
     "AUTOPILOT_VERSION", \
     11, \
     {  { "capabilities", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_autopilot_version_t, capabilities) }, \
-         { "uid", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_autopilot_version_t, uid) }, \
          { "flight_sw_version", NULL, MAVLINK_TYPE_UINT32_T, 0, 16, offsetof(mavlink_autopilot_version_t, flight_sw_version) }, \
          { "middleware_sw_version", NULL, MAVLINK_TYPE_UINT32_T, 0, 20, offsetof(mavlink_autopilot_version_t, middleware_sw_version) }, \
          { "os_sw_version", NULL, MAVLINK_TYPE_UINT32_T, 0, 24, offsetof(mavlink_autopilot_version_t, os_sw_version) }, \
          { "board_version", NULL, MAVLINK_TYPE_UINT32_T, 0, 28, offsetof(mavlink_autopilot_version_t, board_version) }, \
-         { "vendor_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 32, offsetof(mavlink_autopilot_version_t, vendor_id) }, \
-         { "product_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 34, offsetof(mavlink_autopilot_version_t, product_id) }, \
          { "flight_custom_version", NULL, MAVLINK_TYPE_UINT8_T, 8, 36, offsetof(mavlink_autopilot_version_t, flight_custom_version) }, \
          { "middleware_custom_version", NULL, MAVLINK_TYPE_UINT8_T, 8, 44, offsetof(mavlink_autopilot_version_t, middleware_custom_version) }, \
          { "os_custom_version", NULL, MAVLINK_TYPE_UINT8_T, 8, 52, offsetof(mavlink_autopilot_version_t, os_custom_version) }, \
+         { "vendor_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 32, offsetof(mavlink_autopilot_version_t, vendor_id) }, \
+         { "product_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 34, offsetof(mavlink_autopilot_version_t, product_id) }, \
+         { "uid", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_autopilot_version_t, uid) }, \
          } \
 }
 #else
@@ -53,16 +53,16 @@ typedef struct __mavlink_autopilot_version_t {
     "AUTOPILOT_VERSION", \
     11, \
     {  { "capabilities", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_autopilot_version_t, capabilities) }, \
-         { "uid", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_autopilot_version_t, uid) }, \
          { "flight_sw_version", NULL, MAVLINK_TYPE_UINT32_T, 0, 16, offsetof(mavlink_autopilot_version_t, flight_sw_version) }, \
          { "middleware_sw_version", NULL, MAVLINK_TYPE_UINT32_T, 0, 20, offsetof(mavlink_autopilot_version_t, middleware_sw_version) }, \
          { "os_sw_version", NULL, MAVLINK_TYPE_UINT32_T, 0, 24, offsetof(mavlink_autopilot_version_t, os_sw_version) }, \
          { "board_version", NULL, MAVLINK_TYPE_UINT32_T, 0, 28, offsetof(mavlink_autopilot_version_t, board_version) }, \
-         { "vendor_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 32, offsetof(mavlink_autopilot_version_t, vendor_id) }, \
-         { "product_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 34, offsetof(mavlink_autopilot_version_t, product_id) }, \
          { "flight_custom_version", NULL, MAVLINK_TYPE_UINT8_T, 8, 36, offsetof(mavlink_autopilot_version_t, flight_custom_version) }, \
          { "middleware_custom_version", NULL, MAVLINK_TYPE_UINT8_T, 8, 44, offsetof(mavlink_autopilot_version_t, middleware_custom_version) }, \
          { "os_custom_version", NULL, MAVLINK_TYPE_UINT8_T, 8, 52, offsetof(mavlink_autopilot_version_t, os_custom_version) }, \
+         { "vendor_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 32, offsetof(mavlink_autopilot_version_t, vendor_id) }, \
+         { "product_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 34, offsetof(mavlink_autopilot_version_t, product_id) }, \
+         { "uid", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_autopilot_version_t, uid) }, \
          } \
 }
 #endif
@@ -83,7 +83,7 @@ typedef struct __mavlink_autopilot_version_t {
  * @param os_custom_version Custom version field, commonly the first 8 bytes of the git hash. This is not an unique identifier, but should allow to identify the commit using the main version number even for very large code bases.
  * @param vendor_id ID of the board vendor
  * @param product_id ID of the product
- * @param uid UID if provided by hardware
+ * @param uid UID if provided by hardware (see uid2)
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_autopilot_version_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
@@ -139,7 +139,7 @@ static inline uint16_t mavlink_msg_autopilot_version_pack(uint8_t system_id, uin
  * @param os_custom_version Custom version field, commonly the first 8 bytes of the git hash. This is not an unique identifier, but should allow to identify the commit using the main version number even for very large code bases.
  * @param vendor_id ID of the board vendor
  * @param product_id ID of the product
- * @param uid UID if provided by hardware
+ * @param uid UID if provided by hardware (see uid2)
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_autopilot_version_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
@@ -221,7 +221,7 @@ static inline uint16_t mavlink_msg_autopilot_version_encode_chan(uint8_t system_
  * @param os_custom_version Custom version field, commonly the first 8 bytes of the git hash. This is not an unique identifier, but should allow to identify the commit using the main version number even for very large code bases.
  * @param vendor_id ID of the board vendor
  * @param product_id ID of the product
- * @param uid UID if provided by hardware
+ * @param uid UID if provided by hardware (see uid2)
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
@@ -422,7 +422,7 @@ static inline uint16_t mavlink_msg_autopilot_version_get_product_id(const mavlin
 /**
  * @brief Get field uid from autopilot_version message
  *
- * @return UID if provided by hardware
+ * @return UID if provided by hardware (see uid2)
  */
 static inline uint64_t mavlink_msg_autopilot_version_get_uid(const mavlink_message_t* msg)
 {

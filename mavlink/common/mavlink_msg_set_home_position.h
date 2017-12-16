@@ -33,7 +33,8 @@ typedef struct __mavlink_set_home_position_t {
     243, \
     "SET_HOME_POSITION", \
     11, \
-    {  { "latitude", NULL, MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_set_home_position_t, latitude) }, \
+    {  { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 52, offsetof(mavlink_set_home_position_t, target_system) }, \
+         { "latitude", NULL, MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_set_home_position_t, latitude) }, \
          { "longitude", NULL, MAVLINK_TYPE_INT32_T, 0, 4, offsetof(mavlink_set_home_position_t, longitude) }, \
          { "altitude", NULL, MAVLINK_TYPE_INT32_T, 0, 8, offsetof(mavlink_set_home_position_t, altitude) }, \
          { "x", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_set_home_position_t, x) }, \
@@ -43,14 +44,14 @@ typedef struct __mavlink_set_home_position_t {
          { "approach_x", NULL, MAVLINK_TYPE_FLOAT, 0, 40, offsetof(mavlink_set_home_position_t, approach_x) }, \
          { "approach_y", NULL, MAVLINK_TYPE_FLOAT, 0, 44, offsetof(mavlink_set_home_position_t, approach_y) }, \
          { "approach_z", NULL, MAVLINK_TYPE_FLOAT, 0, 48, offsetof(mavlink_set_home_position_t, approach_z) }, \
-         { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 52, offsetof(mavlink_set_home_position_t, target_system) }, \
          } \
 }
 #else
 #define MAVLINK_MESSAGE_INFO_SET_HOME_POSITION { \
     "SET_HOME_POSITION", \
     11, \
-    {  { "latitude", NULL, MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_set_home_position_t, latitude) }, \
+    {  { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 52, offsetof(mavlink_set_home_position_t, target_system) }, \
+         { "latitude", NULL, MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_set_home_position_t, latitude) }, \
          { "longitude", NULL, MAVLINK_TYPE_INT32_T, 0, 4, offsetof(mavlink_set_home_position_t, longitude) }, \
          { "altitude", NULL, MAVLINK_TYPE_INT32_T, 0, 8, offsetof(mavlink_set_home_position_t, altitude) }, \
          { "x", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_set_home_position_t, x) }, \
@@ -60,7 +61,6 @@ typedef struct __mavlink_set_home_position_t {
          { "approach_x", NULL, MAVLINK_TYPE_FLOAT, 0, 40, offsetof(mavlink_set_home_position_t, approach_x) }, \
          { "approach_y", NULL, MAVLINK_TYPE_FLOAT, 0, 44, offsetof(mavlink_set_home_position_t, approach_y) }, \
          { "approach_z", NULL, MAVLINK_TYPE_FLOAT, 0, 48, offsetof(mavlink_set_home_position_t, approach_z) }, \
-         { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 52, offsetof(mavlink_set_home_position_t, target_system) }, \
          } \
 }
 #endif
