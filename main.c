@@ -75,7 +75,7 @@ int open_udp_socket_for_rx(int port)
 int main(int argc, char *argv[]) {
     uint64_t render_ts = 0;
     uint64_t cur_ts = 0;
-    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    uint8_t buf[65536]; // Max UDP packet size
     int fd;
     struct pollfd fds[1];
     int shift_x = 0;
