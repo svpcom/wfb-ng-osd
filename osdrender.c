@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include <sys/time.h>
+#include <time.h>
 #include "osdrender.h"
 #include "graphengine.h"
 #include "osdvar.h"
@@ -131,7 +132,6 @@ void render() {
 
 // TODO: try if this is performance critical or not
 char tmp_str[50] = { 0 };
-char* tmp_str1 = "";
 
 void RenderScreen(void) {
   do_converts();
@@ -150,8 +150,9 @@ void RenderScreen(void) {
   draw_absolute_altitude();
   draw_relative_altitude();
   draw_speed_scale();
-  draw_ground_speed();
-  draw_air_speed();
+  draw_vtol_speed();
+  //draw_ground_speed();
+  //draw_air_speed();
   draw_home_direction();
   draw_uav2d();
   draw_throttle();
@@ -242,7 +243,7 @@ void draw_radar() {
   int y = osd_params.Atti_mp_posY;
   int wingStart = (int)(12.0f * atti_mp_scale);
   int wingEnd = (int)(7.0f * atti_mp_scale);
-  char tmp_str[10] = { 0 };
+
   //draw uav
   write_line_outlined(x, y, x - 9, y + 5, 2, 2, 0, 1);
   write_line_outlined(x, y, x + 9, y + 5, 2, 2, 0, 1);
@@ -251,7 +252,7 @@ void draw_radar() {
 
 
   write_filled_rectangle_lm(x - 9, y + 6, 15, 9, 0, 1);
-  sprintf(tmp_str, "%d", (int)osd_pitch);
+  snprintf(tmp_str, sizeof(tmp_str), "%d", (int)osd_pitch);
   write_string(tmp_str, x, y + 5, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
 
   y = osd_params.Atti_mp_posY - (int)(38.0f * atti_mp_scale);
@@ -259,7 +260,7 @@ void draw_radar() {
   write_line_outlined(x, y, x - 4, y + 8, 2, 2, 0, 1);
   write_line_outlined(x, y, x + 4, y + 8, 2, 2, 0, 1);
   write_line_outlined(x - 4, y + 8, x + 4, y + 8, 2, 2, 0, 1);
-  sprintf(tmp_str, "%d", (int)osd_roll);
+  snprintf(tmp_str, sizeof(tmp_str), "%d", (int)osd_roll);
   write_string(tmp_str, x, y - 3, 0, 0, TEXT_VA_BOTTOM, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
 }
 
@@ -314,7 +315,6 @@ void draw_throttle(void) {
     return;
   }*/
 
-  char tmp_str[10] = { 0 };
   int16_t pos_th_y, pos_th_x;
   int posX, posY;
   posX = osd_params.Throt_posX;
@@ -322,13 +322,13 @@ void draw_throttle(void) {
 
   pos_th_y = (int16_t)(0.5 * osd_throttle);
   pos_th_x = posX - 25 + pos_th_y;
-  sprintf(tmp_str, "%d%%", (int32_t)osd_throttle);
+  snprintf(tmp_str, sizeof(tmp_str), "%d%%", (int32_t)osd_throttle);
   write_string(tmp_str, posX, posY, 0, 0, TEXT_VA_TOP, TEXT_HA_RIGHT, 0, SIZE_TO_FONT[0]);
 
   if (osd_params.Throt_scale_en) {
     pos_th_y = (int16_t)(0.5 * osd_throttle);
     pos_th_x = posX - 25 + pos_th_y;
-    sprintf(tmp_str, "%d%%", (int32_t)osd_throttle);
+    snprintf(tmp_str, sizeof(tmp_str), "%d%%", (int32_t)osd_throttle);
     write_string(tmp_str, posX, posY, 0, 0, TEXT_VA_TOP, TEXT_HA_RIGHT, 0, SIZE_TO_FONT[0]);
     if (osd_params.Throttle_Scale_Type == 0) {
       write_filled_rectangle_lm(posX + 3, posY + 25 - pos_th_y, 5, pos_th_y, 1, 1);
@@ -346,7 +346,7 @@ void draw_throttle(void) {
     }
   } else {
     pos_th_y = (int16_t)(0.5 * osd_throttle);
-    sprintf(tmp_str, "THR %d%%", (int32_t)osd_throttle);
+    snprintf(tmp_str, sizeof(tmp_str), "THR %d%%", (int32_t)osd_throttle);
     write_string(tmp_str, posX, posY, 0, 0, TEXT_VA_TOP, TEXT_HA_RIGHT, 0, SIZE_TO_FONT[0]);
   }
 }
@@ -357,7 +357,7 @@ void draw_home_latitude() {
     return;
   }
 
-  sprintf(tmp_str, "H %0.5f", (double) osd_home_lat / 10000000.0f);
+  snprintf(tmp_str, sizeof(tmp_str), "H %0.5f", (double) osd_home_lat / 10000000.0f);
   write_string(tmp_str, osd_params.HomeLatitude_posX,
                osd_params.HomeLatitude_posY, 0, 0, TEXT_VA_TOP,
                osd_params.HomeLatitude_align, 0,
@@ -370,7 +370,7 @@ void draw_home_longitude() {
     return;
   }
 
-  sprintf(tmp_str, "H %0.5f", (double) osd_home_lon / 10000000.0f);
+  snprintf(tmp_str, sizeof(tmp_str), "H %0.5f", (double) osd_home_lon / 10000000.0f);
   write_string(tmp_str, osd_params.HomeLongitude_posX,
                osd_params.HomeLongitude_posY, 0, 0, TEXT_VA_TOP,
                osd_params.HomeLongitude_align, 0,
@@ -386,19 +386,19 @@ void draw_gps_status() {
   switch (osd_fix_type) {
   case NO_GPS:
   case NO_FIX:
-    sprintf(tmp_str, "NOFIX");
+    snprintf(tmp_str, sizeof(tmp_str), "NOFIX");
     break;
   case GPS_OK_FIX_2D:
-    sprintf(tmp_str, "2D-%d", (int) osd_satellites_visible);
+    snprintf(tmp_str, sizeof(tmp_str), "2D-%d", (int) osd_satellites_visible);
     break;
   case GPS_OK_FIX_3D:
-    sprintf(tmp_str, "3D-%d", (int) osd_satellites_visible);
+    snprintf(tmp_str, sizeof(tmp_str), "3D-%d", (int) osd_satellites_visible);
     break;
   case GPS_OK_FIX_3D_DGPS:
-    sprintf(tmp_str, "D3D-%d", (int) osd_satellites_visible);
+    snprintf(tmp_str, sizeof(tmp_str), "D3D-%d", (int) osd_satellites_visible);
     break;
   default:
-    sprintf(tmp_str, "NOGPS");
+    snprintf(tmp_str, sizeof(tmp_str), "NOGPS");
     break;
   }
   write_string(tmp_str, osd_params.GpsStatus_posX,
@@ -413,7 +413,7 @@ void draw_gps_hdop() {
     return;
   }
 
-  sprintf(tmp_str, "HDOP %0.1f", (double) osd_hdop / 100.0f);
+  snprintf(tmp_str, sizeof(tmp_str), "HDOP %0.1f", (double) osd_hdop / 100.0f);
   write_string(tmp_str, osd_params.GpsHDOP_posX,
                osd_params.GpsHDOP_posY, 0, 0, TEXT_VA_TOP,
                osd_params.GpsHDOP_align, 0,
@@ -426,7 +426,7 @@ void draw_gps_latitude() {
     return;
   }
 
-  sprintf(tmp_str, "%0.5f", (double) osd_lat / 10000000.0f);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.5f", (double) osd_lat / 10000000.0f);
   write_string(tmp_str, osd_params.GpsLat_posX,
                osd_params.GpsLat_posY, 0, 0, TEXT_VA_TOP,
                osd_params.GpsLat_align, 0,
@@ -439,7 +439,7 @@ void draw_gps_longitude() {
     return;
   }
 
-  sprintf(tmp_str, "%0.5f", (double) osd_lon / 10000000.0f);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.5f", (double) osd_lon / 10000000.0f);
   write_string(tmp_str, osd_params.GpsLon_posX,
                osd_params.GpsLon_posY, 0, 0, TEXT_VA_TOP,
                osd_params.GpsLon_align, 0,
@@ -455,19 +455,19 @@ void draw_gps2_status() {
   switch (osd_fix_type2) {
   case NO_GPS:
   case NO_FIX:
-    sprintf(tmp_str, "NOFIX");
+    snprintf(tmp_str, sizeof(tmp_str), "NOFIX");
     break;
   case GPS_OK_FIX_2D:
-    sprintf(tmp_str, "2D-%d", (int) osd_satellites_visible2);
+    snprintf(tmp_str, sizeof(tmp_str), "2D-%d", (int) osd_satellites_visible2);
     break;
   case GPS_OK_FIX_3D:
-    sprintf(tmp_str, "3D-%d", (int) osd_satellites_visible2);
+    snprintf(tmp_str, sizeof(tmp_str), "3D-%d", (int) osd_satellites_visible2);
     break;
   case GPS_OK_FIX_3D_DGPS:
-    sprintf(tmp_str, "D3D-%d", (int) osd_satellites_visible2);
+    snprintf(tmp_str, sizeof(tmp_str), "D3D-%d", (int) osd_satellites_visible2);
     break;
   default:
-    sprintf(tmp_str, "NOGPS");
+    snprintf(tmp_str, sizeof(tmp_str), "NOGPS");
     break;
   }
   write_string(tmp_str, osd_params.Gps2Status_posX,
@@ -482,7 +482,7 @@ void draw_gps2_hdop() {
     return;
   }
 
-  sprintf(tmp_str, "HDOP %0.1f", (double) osd_hdop2 / 100.0f);
+  snprintf(tmp_str, sizeof(tmp_str), "HDOP %0.1f", (double) osd_hdop2 / 100.0f);
   write_string(tmp_str, osd_params.Gps2HDOP_posX,
                osd_params.Gps2HDOP_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Gps2HDOP_align, 0,
@@ -495,7 +495,7 @@ void draw_gps2_latitude() {
     return;
   }
 
-  sprintf(tmp_str, "%0.5f", (double) osd_lat2 / 10000000.0f);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.5f", (double) osd_lat2 / 10000000.0f);
   write_string(tmp_str, osd_params.Gps2Lat_posX,
                osd_params.Gps2Lat_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Gps2Lat_align, 0,
@@ -508,7 +508,7 @@ void draw_gps2_longitude() {
     return;
   }
 
-  sprintf(tmp_str, "%0.5f", (double) osd_lon2 / 10000000.0f);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.5f", (double) osd_lon2 / 10000000.0f);
   write_string(tmp_str, osd_params.Gps2Lon_posX,
                osd_params.Gps2Lon_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Gps2Lon_align, 0,
@@ -523,10 +523,10 @@ void draw_total_trip() {
 
   float tmp = osd_total_trip_dist * convert_distance;
   if (tmp < convert_distance_divider) {
-    sprintf(tmp_str, "%d%s", (int) tmp, dist_unit_short);
+    snprintf(tmp_str, sizeof(tmp_str), "%d%s", (int) tmp, dist_unit_short);
   }
   else{
-    sprintf(tmp_str, "%0.2f%s", (double) (tmp / convert_distance_divider), dist_unit_long);
+    snprintf(tmp_str, sizeof(tmp_str), "%0.2f%s", (double) (tmp / convert_distance_divider), dist_unit_long);
   }
   write_string(tmp_str, osd_params.TotalTripDist_posX,
                osd_params.TotalTripDist_posY, 0, 0, TEXT_VA_TOP,
@@ -540,26 +540,14 @@ void draw_time() {
     return;
   }
 
-  uint64_t time_now = GetSystimeMS() - sys_start_time;
+  time_t t = time(NULL);
+  struct tm *lt = localtime(&t);
 
-  if (osd_params.Time_type == 1) {
-    time_now = heatbeat_start_time ? (GetSystimeMS() - heatbeat_start_time) : 0;
-  } else if (osd_params.Time_type == 2) {
-    time_now = armed_start_time ? (GetSystimeMS() - armed_start_time + total_armed_time) : total_armed_time;
+  if (lt == NULL){
+      return;
   }
 
-  int16_t tmp_int16 = (time_now / 3600000);     // hours
-  int tmp_int1 = 0;
-  int tmp_int2 = 0;
-  if (tmp_int16 == 0) {
-    tmp_int1 = time_now / 60000;       // minutes
-    tmp_int2 = (time_now / 1000) - 60 * tmp_int1;       // seconds
-    sprintf(tmp_str, "%02d:%02d", (int) tmp_int1, (int) tmp_int2);
-  } else {
-    tmp_int1 = time_now / 60000 - 60 * tmp_int16;       // minutes
-    tmp_int2 = (time_now / 1000) - 60 * tmp_int1 - 3600 * tmp_int16;       // seconds
-    sprintf(tmp_str, "%02d:%02d:%02d", (int) tmp_int16, (int) tmp_int1, (int) tmp_int2);
-  }
+  strftime(tmp_str, sizeof(tmp_str), "%H:%M:%S", lt);
   write_string(tmp_str, osd_params.Time_posX,
                osd_params.Time_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Time_align, 0,
@@ -613,18 +601,18 @@ void draw_CWH(void) {
   if (osd_params.CWH_home_dist_en == 1 && shownAtPanel(osd_params.CWH_home_dist_panel)) {
     float tmp = osd_home_distance * convert_distance;
     if (tmp < convert_distance_divider)
-      sprintf(tmp_str, "H %d%s", (int)tmp, dist_unit_short);
+      snprintf(tmp_str, sizeof(tmp_str), "H %d%s", (int)tmp, dist_unit_short);
     else
-      sprintf(tmp_str, "H %0.2f%s", (double)(tmp / convert_distance_divider), dist_unit_long);
+      snprintf(tmp_str, sizeof(tmp_str), "H %0.2f%s", (double)(tmp / convert_distance_divider), dist_unit_long);
 
     write_string(tmp_str, osd_params.CWH_home_dist_posX, osd_params.CWH_home_dist_posY, 0, 0, TEXT_VA_TOP, osd_params.CWH_home_dist_align, 0, SIZE_TO_FONT[osd_params.CWH_home_dist_fontsize]);
   }
   if ((wp_number != 0) && (osd_params.CWH_wp_dist_en) && shownAtPanel(osd_params.CWH_wp_dist_panel)) {
     float tmp = wp_dist * convert_distance;
     if (tmp < convert_distance_divider)
-      sprintf(tmp_str, "WP %d%s", (int)tmp, dist_unit_short);
+      snprintf(tmp_str, sizeof(tmp_str), "WP %d%s", (int)tmp, dist_unit_short);
     else
-      sprintf(tmp_str, "WP %0.2f%s", (double)(tmp / convert_distance_divider), dist_unit_long);
+      snprintf(tmp_str, sizeof(tmp_str), "WP %0.2f%s", (double)(tmp / convert_distance_divider), dist_unit_long);
 
     write_string(tmp_str, osd_params.CWH_wp_dist_posX, osd_params.CWH_wp_dist_posY, 0, 0, TEXT_VA_TOP, osd_params.CWH_wp_dist_align, 0, SIZE_TO_FONT[osd_params.CWH_wp_dist_fontsize]);
   }
@@ -656,7 +644,7 @@ void draw_climb_rate() {
 
   int x = osd_params.ClimbRate_posX;
   int y = osd_params.ClimbRate_posY;
-  sprintf(tmp_str, "%0.1f", fabs(average_climb));
+  snprintf(tmp_str, sizeof(tmp_str), "%0.1f", fabs(average_climb));
   write_string(tmp_str, x + 5, y, 0, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0,
                SIZE_TO_FONT[osd_params.ClimbRate_fontsize]);
 
@@ -719,9 +707,9 @@ void draw_rssi() {
 
     if (rssi < 0)
       rssi = 0;
-    sprintf(tmp_str, "RSSI %d%%", rssi);
+    snprintf(tmp_str, sizeof(tmp_str), "RSSI %d%%", rssi);
   } else {
-    sprintf(tmp_str, "RSSI %d", rssi);
+    snprintf(tmp_str, sizeof(tmp_str), "RSSI %d", rssi);
   }
 
   write_string(tmp_str, osd_params.RSSI_posX,
@@ -769,9 +757,9 @@ void draw_link_quality() {
 
     //Funky Conversion from  pwm min & max to percent
     linkquality = (int) ((float) (linkquality - max) / (float) (max - min) * 100.0f) + 100;
-    sprintf(tmp_str, "LIQU %d%%", linkquality);
+    snprintf(tmp_str, sizeof(tmp_str), "LIQU %d%%", linkquality);
   } else {
-    sprintf(tmp_str, "LIQU %d", linkquality);
+    snprintf(tmp_str, sizeof(tmp_str), "LIQU %d", linkquality);
   }
 
   write_string(tmp_str, osd_params.LinkQuality_posX,
@@ -792,7 +780,7 @@ void draw_efficiency() {
   if (speed != 0) {
     efficiency = wattage / speed;
   }
-  sprintf(tmp_str, "%0.1fW/%s", efficiency, dist_unit_long);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.1fW/%s", efficiency, dist_unit_long);
 
   write_string(tmp_str, osd_params.Efficiency_posX, osd_params.Efficiency_posY,
                0, 0, TEXT_VA_TOP, osd_params.Efficiency_align, 0,
@@ -806,7 +794,7 @@ void draw_panel_changed() {
   }
 
   if ((GetSystimeMS() - new_panel_start_time) < 3000) {
-    sprintf(tmp_str, "P %d", (int) current_panel);
+    snprintf(tmp_str, sizeof(tmp_str), "P %d", (int) current_panel);
     write_string(tmp_str, GRAPHICS_X_MIDDLE, 210, 0, 0, TEXT_VA_TOP,
                  TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
   }
@@ -896,32 +884,32 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
       }
     }
 
-//      // Put home direction
-//      if (rr == home_dir) {
-//          xs = ((long int)(r * width) / (long int)range) + x;
-//          write_filled_rectangle_lm(xs - 5, majtick_start + textoffset + 7, 10, 10, 0, 1);
-//          write_string("H", xs + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 1);
-//          home_drawn = true;
-//      }
-//
-//      // Put home direction
-//      if (rr == wp_dir) {
-//          xs = ((long int)(r * width) / (long int)range) + x;
-//          write_filled_rectangle_lm(xs - 5, majtick_start + textoffset + 7, 10, 10, 0, 1);
-//          write_string("W", xs + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 1);
-////            home_drawn = true;
-//      }
+     // Put home direction
+     if (rr == home_dir) {
+         xs = ((long int)(r * width) / (long int)range) + x;
+         write_filled_rectangle_lm(xs - 5, majtick_start + textoffset + 7, 10, 10, 0, 1);
+         write_string("H", xs + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 1);
+         home_drawn = true;
+     }
+
+     /* // Put home direction */
+     /* if (rr == wp_dir) { */
+     /*     xs = ((long int)(r * width) / (long int)range) + x; */
+     /*     write_filled_rectangle_lm(xs - 5, majtick_start + textoffset + 7, 10, 10, 0, 1); */
+     /*     write_string("W", xs + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 1); */
+     /*     home_drawn = true; */
+     /* } */
   }
 
-//  if (home_dir > 0 && !home_drawn) {
-//      if (((v > home_dir) && (v - home_dir < 180)) || ((v < home_dir) && (home_dir -v > 180)))
-//          r = x - ((long int)(range_2 * width) / (long int)range);
-//      else
-//          r = x + ((long int)(range_2 * width) / (long int)range);
+  if (home_dir > 0 && !home_drawn) {
+     if (((v > home_dir) && (v - home_dir < 180)) || ((v < home_dir) && (home_dir -v > 180)))
+         r = x - ((long int)(range_2 * width) / (long int)range);
+     else
+         r = x + ((long int)(range_2 * width) / (long int)range);
 
-//      write_filled_rectangle_lm(r - 5, majtick_start + textoffset + 7, 10, 10, 0, 1);
-//      write_string("H", r + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 1);
-//  }
+     write_filled_rectangle_lm(r - 5, majtick_start + textoffset + 7, 10, 10, 0, 1);
+     write_string("H", r + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 1);
+  }
 
 
   // Then, draw a rectangle with the present heading in it.
@@ -1162,7 +1150,7 @@ void draw_head_wp_home() {
     wp_target_bearing = (wp_target_bearing + 360) % 360;
     float wpCX = posX + (osd_params.CWH_Nmode_wp_radius) * Fast_Sin(wp_target_bearing);
     float wpCY = posY - (osd_params.CWH_Nmode_wp_radius) * Fast_Cos(wp_target_bearing);
-    sprintf(tmp_str, "%d", (int)wp_number);
+    snprintf(tmp_str, sizeof(tmp_str), "%d", (int)wp_number);
     write_string(tmp_str, wpCX, wpCY, 0, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
   }
 }
@@ -1173,7 +1161,6 @@ void draw_wind(void) {
     return;
   }
 
-  char tmp_str[10] = { 0 };
   uint16_t posX = osd_params.Wind_posX;
   uint16_t posY = osd_params.Wind_posY;
 
@@ -1200,7 +1187,7 @@ void draw_wind(void) {
 
   //draw wind speed
   float tmp = osd_windSpeed * convert_speed;
-  sprintf(tmp_str, "%.2f%s", tmp, spd_unit);
+  snprintf(tmp_str, sizeof(tmp_str), "%.2f%s", tmp, spd_unit);
   write_string(tmp_str, posX + 15, posY, 0, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
 }
 
@@ -1318,13 +1305,12 @@ void draw_warning(void) {
 }
 
 void debug_wps(void) {
-  char tmp_str[50] = { 0 };
 
 //    //debug
 //    uint16_t a = 20;
 //    for(int i=1; i<wp_counts; i++)
 //    {
-//        sprintf(tmp_str, "WP%d X:%0.12f Y:%0.12f",
+//        snprintf(tmp_str, sizeof(tmp_str), "WP%d X:%0.12f Y:%0.12f",
 //                         (int)wp_list[i].seq, (double)wp_list[i].x,
 //                          (double)wp_list[i].y);
 //        write_string(tmp_str, 10, a, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
@@ -1337,16 +1323,16 @@ void debug_wps(void) {
   float home_lon = osd_home_lon / 10000000.0f;
 
 //    if(osd_fix_type > 1){
-//        sprintf(tmp_str, "UAV X:%0.12f Y:%0.12f",(double)uav_lat,(double)uav_lon);
+//        snprintf(tmp_str, sizeof(tmp_str), "UAV X:%0.12f Y:%0.12f",(double)uav_lat,(double)uav_lon);
 //        write_string(tmp_str, 10, a, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
 //        a += 15;
 //    }
 
   if (osd_got_home == 1) {
-//        sprintf(tmp_str, "home X:%0.12f Y:%0.12f",(double)home_lat,(double)home_lon);
+//        snprintf(tmp_str, sizeof(tmp_str), "home X:%0.12f Y:%0.12f",(double)home_lat,(double)home_lon);
 //        write_string(tmp_str, 10, a, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
 //        a += 15;
-    sprintf(tmp_str, "%0.5f %0.5f", (double)home_lat, (double)home_lon);
+    snprintf(tmp_str, sizeof(tmp_str), "%0.5f %0.5f", (double)home_lat, (double)home_lon);
     write_string(tmp_str, 70, 210, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
   }
 
@@ -1477,7 +1463,7 @@ void draw_arm_state() {
     return;
   }
 
-  tmp_str1 = motor_armed ? "ARMED" : "DISARMED";
+  char* tmp_str1 = motor_armed ? "ARMED" : "DISARMED";
   write_string(tmp_str1, osd_params.Arm_posX,
                osd_params.Arm_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Arm_align, 0,
@@ -1490,7 +1476,7 @@ void draw_battery_voltage() {
     return;
   }
 
-  sprintf(tmp_str, "%0.1fV", (double) osd_vbat_A);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.1fV", (double) osd_vbat_A);
   write_string(tmp_str, osd_params.BattVolt_posX,
                osd_params.BattVolt_posY, 0, 0, TEXT_VA_TOP,
                osd_params.BattVolt_align, 0,
@@ -1503,7 +1489,7 @@ void draw_battery_current() {
     return;
   }
 
-  sprintf(tmp_str, "%0.1fA", (double) (osd_curr_A * 0.01));
+  snprintf(tmp_str, sizeof(tmp_str), "%0.1fA", (double) (osd_curr_A * 0.01));
   write_string(tmp_str, osd_params.BattCurrent_posX,
                osd_params.BattCurrent_posY, 0, 0, TEXT_VA_TOP,
                osd_params.BattCurrent_align, 0,
@@ -1516,7 +1502,7 @@ void draw_battery_remaining() {
     return;
   }
 
-  sprintf(tmp_str, "%d%%", osd_battery_remaining_A);
+  snprintf(tmp_str, sizeof(tmp_str), "%d%%", osd_battery_remaining_A);
   write_string(tmp_str, osd_params.BattRemaining_posX,
                osd_params.BattRemaining_posY, 0, 0, TEXT_VA_TOP,
                osd_params.BattRemaining_align, 0,
@@ -1529,7 +1515,7 @@ void draw_battery_consumed() {
     return;
   }
 
-  sprintf(tmp_str, "%dmah", (int)osd_curr_consumed_mah);
+  snprintf(tmp_str, sizeof(tmp_str), "%dmah", (int)osd_curr_consumed_mah);
   write_string(tmp_str, osd_params.BattConsumed_posX,
                osd_params.BattConsumed_posY, 0, 0, TEXT_VA_TOP,
                osd_params.BattConsumed_align, 0,
@@ -1547,14 +1533,14 @@ void draw_altitude_scale() {
 
   if (!isnan(osd_bottom_clearance)){
       alt_shown = osd_bottom_clearance;
-      sprintf(tmp_str, "TAlt");
+      snprintf(tmp_str, sizeof(tmp_str), "TAlt");
   }else{
       if (osd_params.Alt_Scale_type == 0) {
           alt_shown = osd_alt;
-          sprintf(tmp_str, "AAlt");
+          snprintf(tmp_str, sizeof(tmp_str), "AAlt");
       }else{
           alt_shown = osd_rel_alt;
-          sprintf(tmp_str, "RAlt");
+          snprintf(tmp_str, sizeof(tmp_str), "RAlt");
       }
   }
 
@@ -1587,10 +1573,10 @@ void draw_absolute_altitude() {
 
   float tmp = osd_alt * convert_distance;
   if (tmp < convert_distance_divider) {
-    sprintf(tmp_str, "AA %d%s", (int) tmp, dist_unit_short);
+    snprintf(tmp_str, sizeof(tmp_str), "AA %d%s", (int) tmp, dist_unit_short);
   }
   else{
-    sprintf(tmp_str, "AA %0.2f%s", (double) (tmp / convert_distance_divider), dist_unit_long);
+    snprintf(tmp_str, sizeof(tmp_str), "AA %0.2f%s", (double) (tmp / convert_distance_divider), dist_unit_long);
   }
 
   write_string(tmp_str, osd_params.TALT_posX,
@@ -1607,10 +1593,10 @@ void draw_relative_altitude() {
 
   float tmp = osd_rel_alt * convert_distance;
   if (tmp < convert_distance_divider) {
-    sprintf(tmp_str, "A %d%s", (int) tmp, dist_unit_short);
+    snprintf(tmp_str, sizeof(tmp_str), "A %d%s", (int) tmp, dist_unit_short);
   }
   else{
-    sprintf(tmp_str, "A %0.2f%s", (double) (tmp / convert_distance_divider), dist_unit_long);
+    snprintf(tmp_str, sizeof(tmp_str), "A %0.2f%s", (double) (tmp / convert_distance_divider), dist_unit_long);
   }
 
   write_string(tmp_str, osd_params.Relative_ALT_posX,
@@ -1622,15 +1608,20 @@ void draw_relative_altitude() {
 void draw_speed_scale() {
   if (!enabledAndShownOnPanel(osd_params.Speed_scale_en,
                               osd_params.Speed_scale_panel)) {
-    return;
+      return;
   }
 
-  float spd_shown = osd_groundspeed;
-  sprintf(tmp_str, "GS");
-  if (osd_params.Spd_Scale_type == 1) {
-    spd_shown = osd_airspeed;
-    sprintf(tmp_str, "AS");
+  float spd_shown ;
+
+  if (vtol_state == MAV_VTOL_STATE_TRANSITION_TO_FW || vtol_state == MAV_VTOL_STATE_FW)
+  {
+      spd_shown = osd_airspeed;
+      snprintf(tmp_str, sizeof(tmp_str), "AS");
+  } else {
+      spd_shown = osd_groundspeed;
+      snprintf(tmp_str, sizeof(tmp_str), "GS");
   }
+
   draw_vertical_scale(spd_shown * convert_speed, 60,
                       osd_params.Speed_scale_align,
                       osd_params.Speed_scale_posX,
@@ -1641,7 +1632,7 @@ void draw_speed_scale() {
                osd_params.Speed_scale_align, 0,
                SIZE_TO_FONT[0]);
 
-  sprintf(tmp_str, "%s", spd_unit);
+  snprintf(tmp_str, sizeof(tmp_str), "%s", spd_unit);
   write_string(tmp_str, osd_params.Speed_scale_posX,
                osd_params.Speed_scale_posY + 40, 0, 0, TEXT_VA_TOP,
                osd_params.Speed_scale_align, 0,
@@ -1655,7 +1646,7 @@ void draw_ground_speed() {
   }
 
   float tmp = osd_groundspeed * convert_speed;
-  sprintf(tmp_str, "GS %d%s", (int) tmp, spd_unit);
+  snprintf(tmp_str, sizeof(tmp_str), "GS %d%s", (int) tmp, spd_unit);
   write_string(tmp_str, osd_params.TSPD_posX,
                osd_params.TSPD_posY, 0, 0, TEXT_VA_TOP,
                osd_params.TSPD_align, 0,
@@ -1669,10 +1660,31 @@ void draw_air_speed() {
   }
 
   float tmp = osd_airspeed * convert_speed;
-  sprintf(tmp_str, "AS %d%s", (int) tmp, spd_unit);
+  snprintf(tmp_str, sizeof(tmp_str), "AS %d%s", (int) tmp, spd_unit);
   write_string(tmp_str, osd_params.Air_Speed_posX,
                osd_params.Air_Speed_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Air_Speed_align, 0,
                SIZE_TO_FONT[osd_params.Air_Speed_fontsize]);
 }
 
+void draw_vtol_speed() {
+  if (!enabledAndShownOnPanel(osd_params.TSPD_en,
+                              osd_params.TSPD_panel)) {
+    return;
+  }
+
+  float tmp;
+  if (vtol_state == MAV_VTOL_STATE_TRANSITION_TO_FW || vtol_state == MAV_VTOL_STATE_FW)
+  {
+      tmp = osd_airspeed * convert_speed;
+      snprintf(tmp_str, sizeof(tmp_str), "AS %d%s", (int) tmp, spd_unit);
+  } else {
+      tmp = osd_groundspeed * convert_speed;
+      snprintf(tmp_str, sizeof(tmp_str), "GS %d%s", (int) tmp, spd_unit);
+  }
+
+  write_string(tmp_str, osd_params.TSPD_posX,
+               osd_params.TSPD_posY, 0, 0, TEXT_VA_TOP,
+               osd_params.TSPD_align, 0,
+               SIZE_TO_FONT[osd_params.TSPD_fontsize]);
+}

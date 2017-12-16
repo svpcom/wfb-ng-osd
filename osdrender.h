@@ -22,7 +22,7 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include "graphengine.h"
-
+#include "mavlink/common/mavlink.h"
 
 void osd_init(int shift_x, int shift_y, float scale_x, float scale_y);
 void render();
@@ -60,6 +60,7 @@ void draw_relative_altitude(void);
 void draw_speed_scale(void);
 void draw_ground_speed(void);
 void draw_air_speed(void);
+void draw_vtol_speed(void);
 void draw_home_latitude(void);
 void draw_home_longitude(void);
 void draw_gps_status(void);

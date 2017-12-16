@@ -6,18 +6,14 @@
 #include <stdint.h>
 
 /////////////////////////////////////////////////////////////////////////
-extern uint8_t mavbeat;
-extern uint64_t lastMAVBeat;
 extern uint64_t lastWritePanel;
-extern uint8_t waitingMAVBeats;
 extern uint8_t mav_type;
 extern uint8_t mav_system;
 extern uint8_t mav_component;
-extern uint8_t enable_mav_request;
 extern uint64_t sys_start_time;
-extern uint64_t heatbeat_start_time;
 extern uint64_t armed_start_time;
 extern uint64_t total_armed_time;
+extern uint8_t vtol_state;
 
 /////////////////////////////////////////////////////////////////////////
 extern float osd_vbat_A;                 // Battery A voltage in milivolt

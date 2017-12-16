@@ -56,7 +56,6 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                     break;
                 }
 
-                mavbeat = 1;
                 mav_system    = msg.sysid;
                 mav_component = msg.compid;
                 mav_type      = mavtype;
@@ -64,13 +63,8 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 base_mode = mavlink_msg_heartbeat_get_base_mode(&msg);
                 custom_mode = mavlink_msg_heartbeat_get_custom_mode(&msg);
 
-
                 last_motor_armed = motor_armed;
                 motor_armed = base_mode & (1 << 7);
-
-                if (heatbeat_start_time == 0) {
-                    heatbeat_start_time = GetSystimeMS();
-                }
 
                 if (!last_motor_armed && motor_armed) {
                     armed_start_time = GetSystimeMS();
@@ -80,15 +74,14 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                     total_armed_time = GetSystimeMS() - armed_start_time + total_armed_time;
                     armed_start_time = 0;
                 }
-
-                lastMAVBeat = GetSystimeMS();
-
-                if (waitingMAVBeats == 1) {
-                    enable_mav_request = 1;
-                }
-
             }
             break;
+
+            case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
+            {
+                vtol_state = mavlink_msg_extended_sys_state_get_vtol_state(&msg);
+                break;
+            }
 
             case MAVLINK_MSG_ID_SYS_STATUS:
             {
