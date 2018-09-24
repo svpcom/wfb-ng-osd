@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
     int shift_y = 0;
     float scale_x = 1.0;
     float scale_y = 1.0;
+    char *osd_port = getenv("OSD_PORT");
 
     if (argc == 5)
     {
@@ -94,7 +95,7 @@ int main(int argc, char *argv[]) {
     osd_init(shift_x, shift_y, scale_x, scale_y);
 
     memset(fds, '\0', sizeof(fds));
-    fd = open_udp_socket_for_rx(14550);
+    fd = open_udp_socket_for_rx(osd_port == NULL ? 14550 : atoi(osd_port));
 
     if(fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK) < 0)
     {
