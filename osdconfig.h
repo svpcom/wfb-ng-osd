@@ -190,6 +190,8 @@ typedef struct
     uint16_t Alarm_low_alt;
     uint16_t Alarm_over_alt_en;
     uint16_t Alarm_over_alt;
+    uint16_t Alarm_rc_status_en;
+    uint16_t Alarm_wfb_status_en;
 
     uint16_t ClimbRate_en;
     uint16_t ClimbRate_panel;
@@ -199,6 +201,7 @@ typedef struct
     //uint16_t ClimbRate_align;
 
     uint16_t RSSI_en;
+    uint16_t RSSI_type;
     uint16_t RSSI_panel;
     uint16_t RSSI_posX;
     uint16_t RSSI_posY;
@@ -253,8 +256,6 @@ typedef struct
     uint16_t TotalTripDist_posY;
     uint16_t TotalTripDist_fontsize;
     uint16_t TotalTripDist_align;
-
-    uint16_t RSSI_type;
 
     uint16_t Map_en;
     uint16_t Map_panel;
