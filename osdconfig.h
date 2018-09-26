@@ -334,6 +334,13 @@ typedef struct
     uint16_t HomeLongitude_fontsize;
     uint16_t HomeLongitude_align;
 
+    uint16_t WFBState_en;
+    uint16_t WFBState_panel;
+    uint16_t WFBState_posX;
+    uint16_t WFBState_posY;
+    uint16_t WFBState_fontsize;
+    uint16_t WFBState_align;
+
 } osd_params_t;
 
 extern osd_params_t osd_params;

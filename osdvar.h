@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define WFB_LINK_LOST   1
+#define WFB_LINK_JAMMED 2
+
 /////////////////////////////////////////////////////////////////////////
 extern uint64_t lastWritePanel;
 extern uint8_t mav_type;
@@ -86,6 +89,12 @@ extern uint16_t osd_chan14_raw;
 extern uint16_t osd_chan15_raw;
 extern uint16_t osd_chan16_raw;
 extern uint8_t osd_rssi; //raw value from mavlink
+
+extern int8_t wfb_rssi; //WFB rssi
+extern uint16_t wfb_errors;
+extern uint16_t wfb_fec_fixed;
+extern int8_t wfb_flags;
+extern bool rc_lost;
 
 extern uint8_t osd_got_home;               // tels if got home position or not
 extern float osd_home_lat;               // home latidude

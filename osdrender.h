@@ -75,6 +75,7 @@ void draw_total_trip(void);
 void draw_time(void);
 void draw_climb_rate(void);
 void draw_rssi(void);
+void draw_wfb_state(void);
 void draw_link_quality(void);
 void draw_efficiency(void);
 void draw_wind(void);

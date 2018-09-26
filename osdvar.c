@@ -102,6 +102,12 @@ uint16_t osd_chan15_raw = 0;
 uint16_t osd_chan16_raw = 0;
 uint8_t osd_rssi = 0; //raw value from mavlink
 
+int8_t wfb_rssi = -128; //WFB rssi -128dBm
+uint16_t wfb_errors = 0;
+uint16_t wfb_fec_fixed = 0;
+int8_t wfb_flags = WFB_LINK_LOST;
+bool rc_lost = true;
+
 uint8_t osd_got_home = 0;               // tels if got home position or not
 float osd_home_lat = 0.0f;               // home latidude
 float osd_home_lon = 0.0f;               // home longitude

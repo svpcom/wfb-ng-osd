@@ -206,6 +206,19 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
             }
             break;
 
+            case MAVLINK_MSG_ID_RADIO_STATUS:
+            {
+                if ((msg.sysid != 1) || (msg.compid != 242)) {
+                    break;
+                }
+
+                wfb_rssi = (int8_t)mavlink_msg_radio_status_get_rssi(&msg);
+                wfb_errors = mavlink_msg_radio_status_get_rxerrors(&msg);
+                wfb_fec_fixed = mavlink_msg_radio_status_get_fixed(&msg);
+                wfb_flags = mavlink_msg_radio_status_get_txbuf(&msg);
+            }
+            break;
+
             default:
                 //Do nothing
                 break;

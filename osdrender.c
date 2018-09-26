@@ -48,7 +48,7 @@ uint64_t new_panel_start_time = 0;
 
 uint8_t last_warn_type = 0;
 uint64_t last_warn_time = 0;
-char* warn_str = "";
+char warn_str[256];
 
 const char METRIC_SPEED[] = "KM/H";         //kilometer per hour
 const char METRIC_DIST_SHORT[] = "M";       //meter
@@ -171,6 +171,7 @@ void RenderScreen(void) {
   draw_CWH();
   draw_climb_rate();
   draw_rssi();
+  draw_wfb_state();
   draw_link_quality();
   draw_efficiency();
   draw_wind();
@@ -310,10 +311,10 @@ void draw_uav2d() {
 }
 
 void draw_throttle(void) {
-  /*if (enabledAndShownOnPanel(osd_params.Throt_en,
+  if (!enabledAndShownOnPanel(osd_params.Throt_en,
                              osd_params.Throt_panel)) {
-    return;
-  }*/
+      return;
+  }
 
   int16_t pos_th_y, pos_th_x;
   int posX, posY;
@@ -619,12 +620,12 @@ void draw_CWH(void) {
 
   //direction - map-like mode
   if (osd_params.CWH_Nmode_en == 1 && shownAtPanel(osd_params.CWH_Nmode_panel)) {
-    draw_head_wp_home();
+      draw_head_wp_home();
   }
 
   //direction - scale mode
   if (osd_params.CWH_Tmode_en == 1 && shownAtPanel(osd_params.CWH_Tmode_panel)) {
-    draw_linear_compass(osd_heading, 0, 120, 180, GRAPHICS_X_MIDDLE, osd_params.CWH_Tmode_posY, 15, 30, 5, 8, 0);
+      draw_linear_compass(osd_heading, 0, 120, 180, GRAPHICS_X_MIDDLE, osd_params.CWH_Tmode_posY, 15, 30, 5, 8, 0);
   }
 }
 
@@ -637,9 +638,11 @@ void draw_climb_rate() {
   float average_climb = 0.0f;
   osd_climb_ma[osd_climb_ma_index] = osd_climb;
   osd_climb_ma_index = (osd_climb_ma_index + 1) % 10;
+
   for (int i = 0; i < 10; i++) {
     average_climb = average_climb + osd_climb_ma[i];
   }
+
   average_climb = roundf(10 * (average_climb / 10)) / 10.0f;
 
   int x = osd_params.ClimbRate_posX;
@@ -705,15 +708,18 @@ void draw_rssi() {
     if ((rssiMax - rssiMin) > 0)
       rssi = (int) ((float) (rssi - rssiMin) / (float) (rssiMax - rssiMin) * 100.0f);
 
-    if (rssi < 0)
-      rssi = 0;
-    snprintf(tmp_str, sizeof(tmp_str), "RSSI %d%%", rssi);
-  } else {
-    snprintf(tmp_str, sizeof(tmp_str), "RSSI %d", rssi);
+    if (rssi < 0) rssi = 0;
+    snprintf(tmp_str, sizeof(tmp_str), "RC: %d%%", rssi);
+    rc_lost = (rssi < 5) ? true : false;
+  }
+  else
+  {
+    snprintf(tmp_str, sizeof(tmp_str), "RC: %d", rssi);
+    rc_lost = false;
   }
 
   write_string(tmp_str, osd_params.RSSI_posX,
-               osd_params.RSSI_posY, 0, 0, TEXT_VA_MIDDLE,
+               osd_params.RSSI_posY, 0, 0, TEXT_VA_TOP,
                osd_params.RSSI_align, 0,
                SIZE_TO_FONT[osd_params.RSSI_fontsize]);
 }
@@ -830,8 +836,9 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
   int range_2 = range / 2;
   bool home_drawn = false;
 
-//  home_dir = 30;
-//  int wp_dir = 60;
+  // v = 30;
+  // home_dir = 30;
+  // int wp_dir = 60;
 
   for (r = -range_2; r <= +range_2; r++) {
     style = 0;
@@ -1192,17 +1199,11 @@ void draw_wind(void) {
 }
 
 void draw_warning(void) {
-  write_string(warn_str, osd_params.Alarm_posX, osd_params.Alarm_posY, 0, 0, TEXT_VA_TOP, osd_params.Alarm_align, 0, SIZE_TO_FONT[osd_params.Alarm_fontsize]);
-
-  if ((GetSystimeMS() - last_warn_time) < 1000)
-  {
-    return;
-  }
-
-
   bool haswarn = false;
-  const static int warn_cnt = 6;
-  uint8_t warning[] = { 0, 0, 0, 0, 0, 0, 0 };
+  uint8_t warning[] = { 0, 0, 0,
+                        0, 0, 0,
+                        0, 0, 0,
+                        0 };
 
   //no GPS fix!
   if (osd_params.Alarm_GPS_status_en == 1 && (osd_fix_type < GPS_OK_FIX_3D)) {
@@ -1256,52 +1257,82 @@ void draw_warning(void) {
     warning[6] = 1;
   }
 
-  if (haswarn) {
+  if (osd_params.Alarm_rc_status_en == 1 && rc_lost) {
+    haswarn = true;
+    warning[7] = 1;
+  }
+
+  if (osd_params.Alarm_wfb_status_en == 1 && (wfb_flags & WFB_LINK_LOST)) {
+    haswarn = true;
+    warning[8] = 1;
+  }
+
+  if (osd_params.Alarm_wfb_status_en == 1 && (wfb_flags & WFB_LINK_JAMMED)) {
+    haswarn = true;
+    warning[9] = 1;
+  }
+
+  if (haswarn && (GetSystimeMS() - last_warn_time) >= 1000) {
     last_warn_time = GetSystimeMS();
-    if (last_warn_type > (warn_cnt - 1)) last_warn_type = 0;
 
-    if (last_warn_type == 0 && (warning[0] == 1)) {
-      warn_str = "NO GPS FIX";
-      last_warn_type++;
-      return;
-    }
+    do
+    {
+        last_warn_type = (last_warn_type + 1) % (sizeof(warning) / sizeof(uint8_t));
+    }while(!warning[last_warn_type]);
 
-    if (last_warn_type == 1 && (warning[1] == 1)) {
-      warn_str = "LOW BATTERY";
-      last_warn_type++;
-      return;
-    }
+    switch(last_warn_type)
+    {
+    case 0:
+        strncpy(warn_str, "NO GPS FIX", sizeof(warn_str));
+        break;
 
-    if (last_warn_type == 2 && (warning[2] == 1)) {
-      warn_str = "SPEED LOW";
-      last_warn_type++;
-      return;
+    case 1:
+        strncpy(warn_str, "LOW BATTERY", sizeof(warn_str));
+        break;
+
+    case 2:
+        strncpy(warn_str, "SPEED LOW", sizeof(warn_str));
+        break;
+
+    case 3:
+        strncpy(warn_str, "OVER SPEED", sizeof(warn_str));
+        break;
+
+    case 4:
+        strncpy(warn_str, "LOW ALT", sizeof(warn_str));
+        break;
+
+    case 5:
+        strncpy(warn_str, "HIGH ALT", sizeof(warn_str));
+        break;
+
+    case 6:
+        strncpy(warn_str, "NO HOME POSITION SET", sizeof(warn_str));
+        break;
+
+    case 7:
+        strncpy(warn_str, "RC LOST", sizeof(warn_str));
+        break;
+
+    case 8:
+        strncpy(warn_str, "WFB LOST", sizeof(warn_str));
+        break;
+
+    case 9:
+        strncpy(warn_str, "WFB JAMMED", sizeof(warn_str));
+        break;
+
     }
-    if (last_warn_type == 3 && (warning[3] == 1)) {
-      warn_str = "OVER SPEED";
-      last_warn_type++;
-      return;
-    }
-    if (last_warn_type == 4 && (warning[4] == 1)) {
-      warn_str = "LOW ALT";
-      last_warn_type++;
-      return;
-    }
-    if (last_warn_type == 5 && (warning[5] == 1)) {
-      warn_str = "HIGH ALT";
-      last_warn_type++;
-      return;
-    }
-    if (last_warn_type == 6 && warning[6] == 1) {
-      warn_str = "NO HOME POSITION SET";
-      last_warn_type++;
-      return;
-    }
-    last_warn_type++;
   }
-  else{
-    warn_str = "";
+
+  if(!haswarn)
+  {
+      //Show a new warning immediately
+      last_warn_time = 0;
+      strcpy(warn_str, "");
   }
+
+  write_string(warn_str, osd_params.Alarm_posX, osd_params.Alarm_posY, 0, 0, TEXT_VA_TOP, osd_params.Alarm_align, 0, SIZE_TO_FONT[osd_params.Alarm_fontsize]);
 }
 
 void debug_wps(void) {
@@ -1448,7 +1479,7 @@ void draw_flight_mode() {
 
   default:
   {
-    mode_str = "UNSUPPORTED";
+    mode_str = "----";
   }
   }
 
@@ -1476,7 +1507,7 @@ void draw_battery_voltage() {
     return;
   }
 
-  snprintf(tmp_str, sizeof(tmp_str), "%0.1fV", (double) osd_vbat_A);
+  snprintf(tmp_str, sizeof(tmp_str), "%4.1fV", (double) osd_vbat_A);
   write_string(tmp_str, osd_params.BattVolt_posX,
                osd_params.BattVolt_posY, 0, 0, TEXT_VA_TOP,
                osd_params.BattVolt_align, 0,
@@ -1489,7 +1520,7 @@ void draw_battery_current() {
     return;
   }
 
-  snprintf(tmp_str, sizeof(tmp_str), "%0.1fA", (double) (osd_curr_A * 0.01));
+  snprintf(tmp_str, sizeof(tmp_str), "%5.1fA", (double) (osd_curr_A * 0.01));
   write_string(tmp_str, osd_params.BattCurrent_posX,
                osd_params.BattCurrent_posY, 0, 0, TEXT_VA_TOP,
                osd_params.BattCurrent_align, 0,
@@ -1502,7 +1533,7 @@ void draw_battery_remaining() {
     return;
   }
 
-  snprintf(tmp_str, sizeof(tmp_str), "%d%%", osd_battery_remaining_A);
+  snprintf(tmp_str, sizeof(tmp_str), "%3d%%", osd_battery_remaining_A);
   write_string(tmp_str, osd_params.BattRemaining_posX,
                osd_params.BattRemaining_posY, 0, 0, TEXT_VA_TOP,
                osd_params.BattRemaining_align, 0,
@@ -1521,6 +1552,33 @@ void draw_battery_consumed() {
                osd_params.BattConsumed_align, 0,
                SIZE_TO_FONT[osd_params.BattConsumed_fontsize]);
 }
+
+void draw_wfb_state() {
+  if (!enabledAndShownOnPanel(osd_params.WFBState_en,
+                              osd_params.WFBState_panel)) {
+    return;
+  }
+
+  if (wfb_flags & WFB_LINK_LOST)
+  {
+      snprintf(tmp_str, sizeof(tmp_str), "WFB LOST");
+  }
+  else if (wfb_flags & WFB_LINK_JAMMED)
+  {
+      snprintf(tmp_str, sizeof(tmp_str), "WFB %d/JAM", wfb_rssi);
+  }
+  else
+  {
+      snprintf(tmp_str, sizeof(tmp_str), "WFB %d/%d/%d", wfb_rssi, wfb_fec_fixed, wfb_errors);
+  }
+
+  write_string(tmp_str,
+               osd_params.WFBState_posX,
+               osd_params.WFBState_posY, 0, 0, TEXT_VA_TOP,
+               osd_params.WFBState_align, 0,
+               SIZE_TO_FONT[osd_params.WFBState_fontsize]);
+}
+
 
 void draw_altitude_scale() {
   if (!enabledAndShownOnPanel(osd_params.Alt_Scale_en,
