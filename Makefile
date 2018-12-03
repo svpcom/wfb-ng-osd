@@ -1,5 +1,5 @@
-CFLAGS += -g -Wall -std=gnu99 -I$(SYSROOT)/opt/vc/include/ -I$(SYSROOT)/opt/vc/include/interface/vcos/pthreads -I$(SYSROOT)/opt/vc/include/interface/vmcs_host/linux
-LDFLAGS += -L$(SYSROOT)/opt/vc/lib/ -lGLESv2 -lEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -lrt -lm
+CFLAGS += -Wall -std=gnu99 -I$(SYSROOT)/opt/vc/include/ -I$(SYSROOT)/opt/vc/include/interface/vcos/pthreads -I$(SYSROOT)/opt/vc/include/interface/vmcs_host/linux
+LDFLAGS += -L$(SYSROOT)/opt/vc/lib/ -lbrcmGLESv2 -lbrcmEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -lrt -lm
 
 all: osd
 
@@ -15,6 +15,11 @@ build_rpi: clean
 	docker run -i -t --rm -v $(PWD):/build -v $(PWD):/rpxc/sysroot/build wifibroadcast_osd:rpi_raspbian sh -c 'cd /rpxc/sysroot/opt/vc/src/hello_pi/libs/ilclient; SDKSTAGE=/rpxc/sysroot CFLAGS=--sysroot=/rpxc/sysroot LDFLAGS="--sysroot=/rpxc/sysroot" CXX=arm-linux-gnueabihf-g++ CC=arm-linux-gnueabihf-gcc make; cd /build/fpv_video; SDKSTAGE=/rpxc/sysroot CFLAGS=--sysroot=/rpxc/sysroot LDFLAGS="--sysroot=/rpxc/sysroot" CXX=arm-linux-gnueabihf-g++ CC=arm-linux-gnueabihf-gcc make'
 	mkdir -p dist
 	tar czf dist/wifibroadcast_osd.tar.gz osd -C fpv_video fpv_video fpv_video.sh
+	rm -rf /tmp/rpinst
+	mkdir /tmp/rpinst
+	cp -a dist/wifibroadcast_osd.tar.gz rpi_setup.sh /tmp/rpinst
+	makeself --needroot /tmp/rpinst dist/installer.sh wfb-osd-svpcom ./rpi_setup.sh
+	rm -rf /tmp/rpinst
 
 clean:
 	rm -f osd *.o *~
