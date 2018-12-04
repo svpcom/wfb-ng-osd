@@ -11,7 +11,6 @@ Description=FPV OSD
 After=network-online.target
 
 [Service]
-Environment=LD_LIBRARY_PATH=/opt/vc/lib
 ExecStart=/usr/bin/osd
 Type=simple
 Restart=always
@@ -41,7 +40,6 @@ WantedBy=multi-user.target
 EOF
 
 tar xzvf wifibroadcast_osd.tar.gz -C /usr/bin
-(cd /opt/vc/lib; ln -sf libbrcmEGL.so libEGL.so; ln -sf libbrcmGLESv2.so libGLESv2.so)
 
 systemctl daemon-reload
 systemctl enable fpv-video
