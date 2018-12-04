@@ -126,6 +126,7 @@ static int video_decode_test()
 
       ilclient_change_component_state(video_decode, OMX_StateExecuting);
 
+#ifdef DISPLAY_SET_NOASPECT
       {
           OMX_CONFIG_DISPLAYREGIONTYPE display;
           OMX_ERRORTYPE omx_err;
@@ -142,7 +143,7 @@ static int video_decode_test()
               printf("Unable to set aspect: 0x%x\n", omx_err);
           }
       }
-
+#endif
       while((buf = ilclient_get_input_buffer(video_decode, 130, 1)) != NULL)
       {
          // feed data and wait until we get port settings changed
