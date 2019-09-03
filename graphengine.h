@@ -95,8 +95,8 @@ typedef struct {
 extern int screen_width, screen_height;
 
 // PAL
-#define GRAPHICS_WIDTH         360
-#define GRAPHICS_HEIGHT        288
+#define GRAPHICS_WIDTH         640
+#define GRAPHICS_HEIGHT        360
 #define GRAPHICS_LEFT          0
 #define GRAPHICS_TOP           0
 #define GRAPHICS_RIGHT         (GRAPHICS_WIDTH - 1)

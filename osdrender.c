@@ -50,13 +50,13 @@ uint8_t last_warn_type = 0;
 uint64_t last_warn_time = 0;
 char warn_str[256];
 
-const char METRIC_SPEED[] = "KM/H";         //kilometer per hour
-const char METRIC_DIST_SHORT[] = "M";       //meter
-const char METRIC_DIST_LONG[] = "KM";       //kilometer
+const char METRIC_SPEED[] = "km/h";         //kilometer per hour
+const char METRIC_DIST_SHORT[] = "m";       //meter
+const char METRIC_DIST_LONG[] = "km";       //kilometer
 
-const char IMPERIAL_SPEED[] = "M/H";        //mile per hour
-const char IMPERIAL_DIST_SHORT[] = "F";     //feet
-const char IMPERIAL_DIST_LONG[] = "M";      //mile
+const char IMPERIAL_SPEED[] = "mph";        //mile per hour
+const char IMPERIAL_DIST_SHORT[] = "ft";     //feet
+const char IMPERIAL_DIST_LONG[] = "ml";      //mile
 
 // Unit conversion constants
 float convert_speed = 0.0f;
@@ -150,8 +150,8 @@ void RenderScreen(void) {
   draw_absolute_altitude();
   draw_relative_altitude();
   draw_speed_scale();
-  draw_vtol_speed();
-  //draw_ground_speed();
+  //draw_vtol_speed();
+  draw_ground_speed();
   //draw_air_speed();
   draw_home_direction();
   draw_uav2d();
@@ -183,29 +183,35 @@ void RenderScreen(void) {
 
 void draw_simple_attitude() {
   Reset_Polygon2D(&simple_attitude);
-  int pitch = osd_pitch;
-  const int max_pitch = 60;
   const int radius = 4 * atti_mp_scale;
-  const int x = simple_attitude.x0;
-  const int y = simple_attitude.y0;
-  if (pitch > max_pitch) {
-    pitch = max_pitch;
-  } else if (pitch < -max_pitch) {
-    pitch = -max_pitch;
-  }
+
+  int x = simple_attitude.x0;
+  int y = simple_attitude.y0;
 
   write_line_outlined(x - radius - 1, y, x - 2 * radius - 1, y, 0, 0, 0, 1);
   write_line_outlined(x + radius - 1, y, x + 2 * radius + 1, y, 0, 0, 0, 1);
   write_line_outlined(x, y - radius - 1, x, y - 2 * radius, 0, 0, 0, 1);
   write_circle_outlined(x, y, radius, 0, 1, 0, 1);
 
-  Transform_Polygon2D(&simple_attitude, -osd_roll, 0, pitch);
+  Transform_Polygon2D(&simple_attitude, -osd_roll, 0, osd_pitch);
 
   for (int i = 0; i < simple_attitude.num_verts; i += 2) {
     write_line_outlined(simple_attitude.vlist_trans[i].x + x, simple_attitude.vlist_trans[i].y + y,
                         simple_attitude.vlist_trans[i + 1].x + x, simple_attitude.vlist_trans[i + 1].y + y,
                         2, 2, 0, 1);
   }
+
+  //draw pitch value
+  y = simple_attitude.y0 + 15;
+  snprintf(tmp_str, sizeof(tmp_str), "PT %d", (int)osd_pitch);
+  write_string(tmp_str, x, y + 5, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
+
+  //draw roll value
+  y = simple_attitude.y0 - 20;
+
+  snprintf(tmp_str, sizeof(tmp_str), "RL %d", (int)osd_roll);
+  write_string(tmp_str, x, y - 3, 0, 0, TEXT_VA_BOTTOM, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
+
 }
 
 
@@ -219,7 +225,7 @@ void draw_radar() {
   VECTOR4D v;
   for (index = 0; index < uav2D.num_verts - 1; )
   {
-    VECTOR4D_INITXYZW(&v,   uav2D.vlist_trans[index].x + uav2D.x0, uav2D.vlist_trans[index].y + uav2D.y0,
+    VECTOR4D_INITXYZW(&v, uav2D.vlist_trans[index].x + uav2D.x0, uav2D.vlist_trans[index].y + uav2D.y0,
                       uav2D.vlist_trans[index + 1].x + uav2D.x0, uav2D.vlist_trans[index + 1].y + uav2D.y0);
 
     if (Clip_Line(&v))
@@ -251,10 +257,9 @@ void draw_radar() {
   write_line_outlined(x - wingStart, y, x - wingEnd, y, 2, 2, 0, 1);
   write_line_outlined(x + wingEnd, y, x + wingStart, y, 2, 2, 0, 1);
 
-
   write_filled_rectangle_lm(x - 9, y + 6, 15, 9, 0, 1);
   snprintf(tmp_str, sizeof(tmp_str), "%d", (int)osd_pitch);
-  write_string(tmp_str, x, y + 5, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
+  write_string(tmp_str, x, y + 5, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
 
   y = osd_params.Atti_mp_posY - (int)(38.0f * atti_mp_scale);
   //draw roll value
@@ -262,7 +267,7 @@ void draw_radar() {
   write_line_outlined(x, y, x + 4, y + 8, 2, 2, 0, 1);
   write_line_outlined(x - 4, y + 8, x + 4, y + 8, 2, 2, 0, 1);
   snprintf(tmp_str, sizeof(tmp_str), "%d", (int)osd_roll);
-  write_string(tmp_str, x, y - 3, 0, 0, TEXT_VA_BOTTOM, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
+  write_string(tmp_str, x, y - 3, 0, 0, TEXT_VA_BOTTOM, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
 }
 
 void draw_home_direction() {
@@ -302,7 +307,7 @@ void draw_uav2d() {
                               osd_params.Atti_mp_panel)) {
     return;
   }
-
+ 
   if (osd_params.Atti_mp_type == 0) {
     draw_radar();
   } else {
@@ -312,7 +317,7 @@ void draw_uav2d() {
 
 void draw_throttle(void) {
   if (!enabledAndShownOnPanel(osd_params.Throt_en,
-                             osd_params.Throt_panel)) {
+                              osd_params.Throt_panel)) {
       return;
   }
 
@@ -347,7 +352,7 @@ void draw_throttle(void) {
     }
   } else {
     pos_th_y = (int16_t)(0.5 * osd_throttle);
-    snprintf(tmp_str, sizeof(tmp_str), "THR %d%%", (int32_t)osd_throttle);
+    snprintf(tmp_str, sizeof(tmp_str), "THR %3d%%", (int32_t)osd_throttle);
     write_string(tmp_str, posX, posY, 0, 0, TEXT_VA_TOP, TEXT_HA_RIGHT, 0, SIZE_TO_FONT[0]);
   }
 }
@@ -602,9 +607,9 @@ void draw_CWH(void) {
   if (osd_params.CWH_home_dist_en == 1 && shownAtPanel(osd_params.CWH_home_dist_panel)) {
     float tmp = osd_home_distance * convert_distance;
     if (tmp < convert_distance_divider)
-      snprintf(tmp_str, sizeof(tmp_str), "H %d%s", (int)tmp, dist_unit_short);
+      snprintf(tmp_str, sizeof(tmp_str), "H: %d%s", (int)tmp, dist_unit_short);
     else
-      snprintf(tmp_str, sizeof(tmp_str), "H %0.2f%s", (double)(tmp / convert_distance_divider), dist_unit_long);
+      snprintf(tmp_str, sizeof(tmp_str), "H: %0.2f%s", (double)(tmp / convert_distance_divider), dist_unit_long);
 
     write_string(tmp_str, osd_params.CWH_home_dist_posX, osd_params.CWH_home_dist_posY, 0, 0, TEXT_VA_TOP, osd_params.CWH_home_dist_align, 0, SIZE_TO_FONT[osd_params.CWH_home_dist_fontsize]);
   }
@@ -647,8 +652,21 @@ void draw_climb_rate() {
 
   int x = osd_params.ClimbRate_posX;
   int y = osd_params.ClimbRate_posY;
-  snprintf(tmp_str, sizeof(tmp_str), "%0.1f", fabs(average_climb));
-  write_string(tmp_str, x + 5, y, 0, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0,
+
+  if(average_climb == 0.0f)
+  {
+     return;
+  }
+  else if(fabs(average_climb) < 10.0f)
+  {
+      snprintf(tmp_str, sizeof(tmp_str), "%.1f", fabs(average_climb));
+  }
+  else
+  {
+      snprintf(tmp_str, sizeof(tmp_str), "%.0f", fabs(average_climb));
+  }
+ 
+  write_string(tmp_str, x - 5, y, 0, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0,
                SIZE_TO_FONT[osd_params.ClimbRate_fontsize]);
 
   int arrowLength = 6;
@@ -859,11 +877,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
         // If it's not one of north, south, east, west, draw the heading.
         // Otherwise, draw one of the identifiers.
         if (rr % 90 != 0) {
-          // We abbreviate heading to two digits. This has the side effect of being easy to compute.
-          headingstr[0] = '0' + (rr / 100);
-          headingstr[1] = '0' + ((rr / 10) % 10);
-          headingstr[2] = 0;
-          headingstr[3] = 0;           // nul to terminate
+            snprintf(headingstr, sizeof(headingstr), "%d", rr);
         } else {
           switch (rr) {
           case 0:
@@ -884,7 +898,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
           headingstr[3] = 0;
         }
         // +1 fudge...!
-        write_string(headingstr, xs + 1, majtick_start + textoffset, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 1);
+        write_string(headingstr, xs + 1, majtick_start + textoffset, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 2);
 
       } else if (style == 2) {
         write_vline_outlined(xs, mintick_start, mintick_end, 2, 2, 0, 1);
@@ -895,7 +909,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
      if (rr == home_dir) {
          xs = ((long int)(r * width) / (long int)range) + x;
          write_filled_rectangle_lm(xs - 5, majtick_start + textoffset + 7, 10, 10, 0, 1);
-         write_string("H", xs + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 1);
+         write_string("H", xs + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 2);
          home_drawn = true;
      }
 
@@ -915,7 +929,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
          r = x + ((long int)(range_2 * width) / (long int)range);
 
      write_filled_rectangle_lm(r - 5, majtick_start + textoffset + 7, 10, 10, 0, 1);
-     write_string("H", r + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 1);
+     write_string("H", r + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 2);
   }
 
 
@@ -1043,13 +1057,15 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
   // my_itoa(v, temp);
   if( v != 0.0f && fabsf(v) < 10.0f)
   {
-      sprintf(temp, "%0.1f", v);
+      sprintf(temp, "%3.1f", v);
   }else
   {
-      sprintf(temp, "%d", (int)v);
+      sprintf(temp, "%3d", (int)v);
   }
   // TODO: add auto-sizing.
   calc_text_dimensions(temp, font_info, 1, 0, &dim);
+  dim.width += 3;
+
   int xx = 0, i = 0;
   if (halign == 0) {
     xx = majtick_end + text_x_spacing;
@@ -1123,22 +1139,28 @@ void draw_head_wp_home() {
   posY = osd_params.CWH_Nmode_posY;
   r = osd_params.CWH_Nmode_radius;
   write_circle_outlined(posX, posY, r, 0, 1, 0, 1);
-//    write_string("N", posX, posY - r, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
+  write_string("N", posX, posY - r, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
 
   //draw heading
   POLYGON2D suav;
   suav.state       = 1;
-  suav.num_verts   = 3;
+  suav.num_verts   = 4;
   suav.x0          = posX;
   suav.y0          = posY;
-  VECTOR2D_INITXYZ(&(suav.vlist_local[0]), 0, -7);
-  VECTOR2D_INITXYZ(&(suav.vlist_local[1]), -3, 7);
-  VECTOR2D_INITXYZ(&(suav.vlist_local[2]), 3, 7);
+  VECTOR2D_INITXYZ(&(suav.vlist_local[0]), 0, -14);
+  VECTOR2D_INITXYZ(&(suav.vlist_local[1]), -6, 14);
+  VECTOR2D_INITXYZ(&(suav.vlist_local[2]), 6, 14);
+  VECTOR2D_INITXYZ(&(suav.vlist_local[3]), 0, 10);
   Reset_Polygon2D(&suav);
   Rotate_Polygon2D(&suav, osd_heading);
+
   write_line_outlined(suav.vlist_trans[0].x + suav.x0, suav.vlist_trans[0].y + suav.y0,
                       suav.vlist_trans[1].x + suav.x0, suav.vlist_trans[1].y + suav.y0, 2, 2, 0, 1);
   write_line_outlined(suav.vlist_trans[0].x + suav.x0, suav.vlist_trans[0].y + suav.y0,
+                      suav.vlist_trans[2].x + suav.x0, suav.vlist_trans[2].y + suav.y0, 2, 2, 0, 1);
+  write_line_outlined(suav.vlist_trans[3].x + suav.x0, suav.vlist_trans[3].y + suav.y0,
+                      suav.vlist_trans[1].x + suav.x0, suav.vlist_trans[1].y + suav.y0, 2, 2, 0, 1);
+  write_line_outlined(suav.vlist_trans[3].x + suav.x0, suav.vlist_trans[3].y + suav.y0,
                       suav.vlist_trans[2].x + suav.x0, suav.vlist_trans[2].y + suav.y0, 2, 2, 0, 1);
 
   // draw home
@@ -1591,34 +1613,35 @@ void draw_altitude_scale() {
 
   if (!isnan(osd_bottom_clearance)){
       alt_shown = osd_bottom_clearance;
-      snprintf(tmp_str, sizeof(tmp_str), "TAlt");
+      snprintf(tmp_str, sizeof(tmp_str), "TALT");
   }else{
       if (osd_params.Alt_Scale_type == 0) {
           alt_shown = osd_alt;
-          snprintf(tmp_str, sizeof(tmp_str), "AAlt");
+          snprintf(tmp_str, sizeof(tmp_str), "AALT");
       }else{
           alt_shown = osd_rel_alt;
-          snprintf(tmp_str, sizeof(tmp_str), "RAlt");
+          snprintf(tmp_str, sizeof(tmp_str), "RALT");
       }
   }
 
-  draw_vertical_scale(alt_shown * convert_distance, 60,
+  draw_vertical_scale(alt_shown * convert_distance, 40,
                       osd_params.Alt_Scale_align,
                       osd_params.Alt_Scale_posX,
-                      osd_params.Alt_Scale_posY, 72, 10, 20, 5, 8, 11,
+                      osd_params.Alt_Scale_posY, 100, 
+		      5, 10, 5, 8, 11,
                       10000, 0);
   if ((osd_params.Alt_Scale_align == 1) && (posX > 15)) {
     posX -= 15;
   }
   write_string(tmp_str, posX,
-               osd_params.Alt_Scale_posY - 50, 0, 0, TEXT_VA_TOP,
+               osd_params.Alt_Scale_posY - 70, 0, 0, TEXT_VA_TOP,
                osd_params.Alt_Scale_align, 0,
                SIZE_TO_FONT[0]);
   if ((osd_params.Alt_Scale_align == 1) && (posX > 15)) {
     posX += 10;
   }
-  write_string("M", posX,
-               osd_params.Alt_Scale_posY + 40, 0, 0, TEXT_VA_TOP,
+  write_string("m", posX,
+               osd_params.Alt_Scale_posY + 60, 0, 0, TEXT_VA_TOP,
                osd_params.Alt_Scale_align, 0,
                SIZE_TO_FONT[0]);
 }
@@ -1671,7 +1694,7 @@ void draw_speed_scale() {
 
   float spd_shown ;
 
-  if (vtol_state == MAV_VTOL_STATE_TRANSITION_TO_FW || vtol_state == MAV_VTOL_STATE_FW)
+  if (vtol_state == MAV_VTOL_STATE_TRANSITION_TO_FW || vtol_state == MAV_VTOL_STATE_FW || mav_type == MAV_TYPE_FIXED_WING)
   {
       spd_shown = osd_airspeed;
       snprintf(tmp_str, sizeof(tmp_str), "AS");
@@ -1680,19 +1703,20 @@ void draw_speed_scale() {
       snprintf(tmp_str, sizeof(tmp_str), "GS");
   }
 
-  draw_vertical_scale(spd_shown * convert_speed, 60,
+  draw_vertical_scale(spd_shown * convert_speed, 40,
                       osd_params.Speed_scale_align,
                       osd_params.Speed_scale_posX,
-                      osd_params.Speed_scale_posY, 72, 10, 20, 5, 8, 11,
+                      osd_params.Speed_scale_posY, 100,
+		      5, 10, 5, 8, 11,
                       100, 0);
   write_string(tmp_str, osd_params.Speed_scale_posX,
-               osd_params.Speed_scale_posY - 50, 0, 0, TEXT_VA_TOP,
+               osd_params.Speed_scale_posY - 70, 0, 0, TEXT_VA_TOP,
                osd_params.Speed_scale_align, 0,
                SIZE_TO_FONT[0]);
 
   snprintf(tmp_str, sizeof(tmp_str), "%s", spd_unit);
   write_string(tmp_str, osd_params.Speed_scale_posX,
-               osd_params.Speed_scale_posY + 40, 0, 0, TEXT_VA_TOP,
+               osd_params.Speed_scale_posY + 60, 0, 0, TEXT_VA_TOP,
                osd_params.Speed_scale_align, 0,
                SIZE_TO_FONT[0]);
 }
@@ -1704,7 +1728,7 @@ void draw_ground_speed() {
   }
 
   float tmp = osd_groundspeed * convert_speed;
-  snprintf(tmp_str, sizeof(tmp_str), "GS %d%s", (int) tmp, spd_unit);
+  snprintf(tmp_str, sizeof(tmp_str), "GS: %d %s", (int) tmp, spd_unit);
   write_string(tmp_str, osd_params.TSPD_posX,
                osd_params.TSPD_posY, 0, 0, TEXT_VA_TOP,
                osd_params.TSPD_align, 0,
@@ -1735,10 +1759,10 @@ void draw_vtol_speed() {
   if (vtol_state == MAV_VTOL_STATE_TRANSITION_TO_FW || vtol_state == MAV_VTOL_STATE_FW)
   {
       tmp = osd_airspeed * convert_speed;
-      snprintf(tmp_str, sizeof(tmp_str), "AS %d%s", (int) tmp, spd_unit);
+      snprintf(tmp_str, sizeof(tmp_str), "AS: %d %s", (int) tmp, spd_unit);
   } else {
       tmp = osd_groundspeed * convert_speed;
-      snprintf(tmp_str, sizeof(tmp_str), "GS %d%s", (int) tmp, spd_unit);
+      snprintf(tmp_str, sizeof(tmp_str), "GS: %d %s", (int) tmp, spd_unit);
   }
 
   write_string(tmp_str, osd_params.TSPD_posX,

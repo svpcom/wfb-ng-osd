@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 Vasily Evseenko <svpcom@p2ptech.org>
+  Copyright (C) 2017, 2019 Vasily Evseenko <svpcom@p2ptech.org>
   based on PlayuavOSD https://github.com/TobiasBales/PlayuavOSD.git
 */
 
