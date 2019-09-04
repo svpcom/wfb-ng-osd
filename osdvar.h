@@ -29,14 +29,14 @@ extern float osd_roll;                   // roll from DCM
 extern float osd_yaw;                    // relative heading form DCM
 extern float osd_heading;                // ground course heading from GPS
 
-extern float osd_lat;                    // latidude
-extern float osd_lon;                    // longitude
+extern double osd_lat;                    // latidude
+extern double osd_lon;                    // longitude
 extern uint8_t osd_satellites_visible;     // number of satelites
 extern uint8_t osd_fix_type;               // GPS lock 0-1=no fix, 2=2D, 3=3D
 extern double osd_hdop;
 
-extern float osd_lat2;                    // latidude
-extern float osd_lon2;                    // longitude
+extern double osd_lat2;                    // latidude
+extern double osd_lon2;                    // longitude
 extern uint8_t osd_satellites_visible2;     // number of satelites
 extern uint8_t osd_fix_type2;               // GPS lock 0-1=no fix, 2=2D, 3=3D
 extern double osd_hdop2;
@@ -97,8 +97,8 @@ extern int8_t wfb_flags;
 extern bool rc_lost;
 
 extern uint8_t osd_got_home;               // tels if got home position or not
-extern float osd_home_lat;               // home latidude
-extern float osd_home_lon;               // home longitude
+extern double osd_home_lat;               // home latidude
+extern double osd_home_lon;               // home longitude
 extern float osd_home_alt;
 extern long osd_home_distance;          // distance from home
 extern uint32_t osd_home_bearing;

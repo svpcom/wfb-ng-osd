@@ -101,8 +101,8 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
 
             case MAVLINK_MSG_ID_GPS_RAW_INT:
             {
-                osd_lat = mavlink_msg_gps_raw_int_get_lat(&msg);
-                osd_lon = mavlink_msg_gps_raw_int_get_lon(&msg);
+                osd_lat = mavlink_msg_gps_raw_int_get_lat(&msg) / 10000000.0;
+                osd_lon = mavlink_msg_gps_raw_int_get_lon(&msg) / 10000000.0;
                 osd_fix_type = mavlink_msg_gps_raw_int_get_fix_type(&msg);
                 osd_hdop = mavlink_msg_gps_raw_int_get_eph(&msg);
                 osd_satellites_visible = mavlink_msg_gps_raw_int_get_satellites_visible(&msg);
@@ -111,8 +111,8 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
 
             case MAVLINK_MSG_ID_GPS2_RAW:
             {
-                osd_lat2 = mavlink_msg_gps2_raw_get_lat(&msg);
-                osd_lon2 = mavlink_msg_gps2_raw_get_lon(&msg);
+                osd_lat2 = mavlink_msg_gps2_raw_get_lat(&msg) / 10000000.0;
+                osd_lon2 = mavlink_msg_gps2_raw_get_lon(&msg) / 10000000.0;
                 osd_fix_type2 = mavlink_msg_gps2_raw_get_fix_type(&msg);
                 osd_hdop2 = mavlink_msg_gps2_raw_get_eph(&msg);
                 osd_satellites_visible2 = mavlink_msg_gps2_raw_get_satellites_visible(&msg);

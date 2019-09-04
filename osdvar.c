@@ -40,14 +40,14 @@ float osd_roll = 0.0f;                   // roll from DCM
 float osd_yaw = 0.0f;                    // relative heading form DCM
 float osd_heading = 0.0f;                // ground course heading from GPS
 
-float osd_lat = 0.0f;                    // latidude
-float osd_lon = 0.0f;                    // longitude
+double osd_lat = 0.0f;                    // latidude
+double osd_lon = 0.0f;                    // longitude
 uint8_t osd_satellites_visible = 0;     // number of satelites
 uint8_t osd_fix_type = 0;               // GPS lock 0-1=no fix, 2=2D, 3=3D
 double osd_hdop = 0.0f;
 
-float osd_lat2 = 0.0f;                    // latidude
-float osd_lon2 = 0.0f;                    // longitude
+double osd_lat2 = 0.0f;                    // latidude
+double osd_lon2 = 0.0f;                    // longitude
 uint8_t osd_satellites_visible2 = 0;     // number of satelites
 uint8_t osd_fix_type2 = 0;               // GPS lock 0-1=no fix, 2=2D, 3=3D
 double osd_hdop2 = 0.0f;
@@ -109,8 +109,8 @@ int8_t wfb_flags = WFB_LINK_LOST;
 bool rc_lost = true;
 
 uint8_t osd_got_home = 0;               // tels if got home position or not
-float osd_home_lat = 0.0f;               // home latidude
-float osd_home_lon = 0.0f;               // home longitude
+double osd_home_lat = 0.0f;               // home latidude
+double osd_home_lon = 0.0f;               // home longitude
 float osd_home_alt = 0.0f;
 long osd_home_distance = 0;          // distance from home
 uint32_t osd_home_bearing = 0;
