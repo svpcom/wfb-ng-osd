@@ -68,37 +68,19 @@ void clearGraphics(void) {
 }
 
 void displayGraphics(void) {
-    VGfloat color1[4] = { 255, 255, 255, 0 };
-    VGfloat color2[4] = { 0, 0, 0, 0 };
+    VGfloat bg_color[4] = { 0, 0, 0, 0 };
 
-    vgSetfv(VG_CLEAR_COLOR, 4, color1);
+    vgSetfv(VG_CLEAR_COLOR, 4, bg_color);
     vgClear(0, 0, ogl_state.screen_width, ogl_state.screen_height);
-
-    // set fill
-    VGPaint fillPaint = vgCreatePaint();
-    vgSetParameteri(fillPaint, VG_PAINT_TYPE, VG_PAINT_TYPE_COLOR);
-    vgSetParameterfv(fillPaint, VG_PAINT_COLOR, 4, color2);
-    vgSetPaint(fillPaint, VG_FILL_PATH);
-    vgDestroyPaint(fillPaint);
-
-    // set stroke
-    VGPaint strokePaint = vgCreatePaint();
-    vgSetParameteri(strokePaint, VG_PAINT_TYPE, VG_PAINT_TYPE_COLOR);
-    vgSetParameterfv(strokePaint, VG_PAINT_COLOR, 4, color2);
-    vgSetPaint(strokePaint, VG_STROKE_PATH);
-    vgDestroyPaint(strokePaint);
-
-    // set stroke width
-    vgSetf(VG_STROKE_LINE_WIDTH, 0);
-    vgSeti(VG_STROKE_CAP_STYLE, VG_CAP_BUTT);
-    vgSeti(VG_STROKE_JOIN_STYLE, VG_JOIN_MITER);
 
     vgLoadIdentity();
 
     // convert video buffer into image
     unsigned int dstride = GRAPHICS_WIDTH * 4;
     VGImageFormat rgbaFormat = VG_sABGR_8888;
-    VGImage img = vgCreateImage(rgbaFormat, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, VG_IMAGE_QUALITY_BETTER);
+
+    VGImage img = vgCreateImage(rgbaFormat, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, VG_IMAGE_QUALITY_NONANTIALIASED);
+
     float screen_scale_x = (float)ogl_state.screen_width / GRAPHICS_WIDTH * corr_scale_x;
     float screen_scale_y = (float)ogl_state.screen_height / GRAPHICS_HEIGHT * corr_scale_y;
     float screen_scale = MIN(screen_scale_x, screen_scale_y);
@@ -166,8 +148,8 @@ void inline write_pixel_lm(int x, int y, int mmode, int lmode){
     case 2: //black
         *ptr = 0xff000000u;
         break;
-    case 3: //white
-        *ptr = 0xffffffffu;
+    case 3: // monochrome crt green
+        *ptr = 0xff00ff41u;
         break;
     }
 }
