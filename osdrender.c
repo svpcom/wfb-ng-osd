@@ -673,11 +673,11 @@ void draw_climb_rate() {
   }
 
   if (average_climb > 0.0f) {
-    write_vline_lm(x, y - arrowLength, y + arrowLength, 1, 1);
+    write_vline_outlined(x, y - arrowLength, y + arrowLength, 2, 2, 0, 1);
     write_line_outlined(x - 3, y - arrowLength + 3, x, y - arrowLength, 2, 2, 0, 1);
     write_line_outlined(x + 3, y - arrowLength + 3, x, y - arrowLength, 2, 2, 0, 1);
   } else if (average_climb < 0.0f) {
-    write_vline_lm(x, y - arrowLength, y + arrowLength, 1, 1);
+    write_vline_outlined(x, y - arrowLength, y + arrowLength, 2, 2, 0, 1);
     write_line_outlined(x - 3, y + arrowLength - 3, x, y + arrowLength, 2, 2, 0, 1);
     write_line_outlined(x + 3, y + arrowLength - 3, x, y + arrowLength, 2, 2, 0, 1);
   }
