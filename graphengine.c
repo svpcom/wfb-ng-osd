@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017, 2019 Vasily Evseenko <svpcom@p2ptech.org>
+  Copyright (C) 2017, 2019, 2021 Vasily Evseenko <svpcom@p2ptech.org>
   based on PlayuavOSD https://github.com/TobiasBales/PlayuavOSD.git
 */
 
@@ -28,13 +28,18 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <math.h>
+#include <stdint.h>
+#include <pthread.h>
+
+#ifdef __BCM_OPENVG__
 #include <bcm_host.h>
 #include "VG/openvg.h"
 #include "VG/vgu.h"
-#include <math.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include "eglstate.h"
+#endif
 
 #include "graphengine.h"
 #include "math3d.h"
@@ -43,9 +48,12 @@
 #include "font8x10.h"
 
 
-static uint8_t* video_buf = NULL;
-STATE_T ogl_state;
+static uint8_t* video_buf_int = NULL;
+uint8_t* video_buf_ext = NULL;
+pthread_mutex_t video_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+#ifdef __BCM_OPENVG__
+STATE_T ogl_state;
 static int corr_x, corr_y;
 static float corr_scale_x, corr_scale_y;
 
@@ -60,11 +68,11 @@ void render_init(int shift_x, int shift_y, float scale_x, float scale_y)
     corr_scale_y = scale_y;
 
     fprintf(stderr, "Screen HW %dx%d, virtual %dx%d, corr %d, %d, %f, %f \n", ogl_state.screen_width, ogl_state.screen_height, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, corr_x, corr_y, corr_scale_x, corr_scale_y);
-    video_buf = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
+    video_buf_int = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
 }
 
 void clearGraphics(void) {
-    memset(video_buf, '\0', GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
+    memset(video_buf_int, '\0', GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
 }
 
 void displayGraphics(void) {
@@ -85,7 +93,7 @@ void displayGraphics(void) {
     float screen_scale_y = (float)ogl_state.screen_height / GRAPHICS_HEIGHT * corr_scale_y;
     float screen_scale = MIN(screen_scale_x, screen_scale_y);
 
-    vgImageSubData(img, (void *)video_buf, dstride, rgbaFormat, 0, 0, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
+    vgImageSubData(img, (void *)video_buf_int, dstride, rgbaFormat, 0, 0, GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
     vgLoadIdentity();
     vgTranslate((1.0 - screen_scale/screen_scale_x) / 2.0 * ogl_state.screen_width  + corr_x,
@@ -100,6 +108,29 @@ void displayGraphics(void) {
     eglSwapBuffers(ogl_state.display, ogl_state.surface);
     assert(eglGetError() == EGL_SUCCESS);
 }
+
+#endif
+
+
+#ifdef __GST_CAIRO__
+void render_init(int shift_x, int shift_y, float scale_x, float scale_y)
+{
+    video_buf_ext = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
+    video_buf_int = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
+}
+
+void clearGraphics(void)
+{
+    memset(video_buf_int, '\0', GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
+}
+
+void displayGraphics(void)
+{
+    pthread_mutex_lock(&video_mutex);
+    memcpy(video_buf_ext, video_buf_int, GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
+    pthread_mutex_unlock(&video_mutex);
+}
+#endif
 
 //void drawArrow(uint16_t x, uint16_t y, uint16_t angle, uint16_t size_quarter)
 //{
@@ -137,7 +168,12 @@ void inline write_pixel_lm(int x, int y, int mmode, int lmode){
     assert(mmode < 2 && lmode < 2);
 
     uint8_t mode = (mmode << 1) | lmode;
-    uint32_t *ptr = ((uint32_t*)video_buf) + GRAPHICS_WIDTH * (GRAPHICS_HEIGHT - y - 1) + x;
+
+#ifdef __BCM_OPENVG__
+    uint32_t *ptr = ((uint32_t*)video_buf_int) + GRAPHICS_WIDTH * (GRAPHICS_HEIGHT - y - 1) + x;
+#else
+    uint32_t *ptr = ((uint32_t*)video_buf_int) + GRAPHICS_WIDTH * (y) + x;
+#endif
 
     switch(mode)
     {

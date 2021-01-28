@@ -1,6 +1,7 @@
 #ifndef GRAPH_ENGINE_H__
 #define GRAPH_ENGINE_H__
 
+#include <pthread.h>
 #include "fonts.h"
 
 // Size of an array (num items.)
@@ -154,6 +155,10 @@ void write_string(char *str, int x, int y, int xs, int ys, int va, int ha, int f
 
 int fetch_font_info(uint8_t ch, int font, struct FontEntry *font_info, char *lookup);
 void calc_text_dimensions(char *str, struct FontEntry font, int xs, int ys, struct FontDimensions *dim);
+
+extern uint8_t* video_buf_ext;
+extern pthread_mutex_t video_mutex;
+
 #endif
 
 

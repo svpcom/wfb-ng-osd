@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 Vasily Evseenko <svpcom@p2ptech.org>
+  Copyright (C) 2017, 2021 Vasily Evseenko <svpcom@p2ptech.org>
   based on PlayuavOSD https://github.com/TobiasBales/PlayuavOSD.git
 */
 
@@ -71,8 +71,8 @@ int open_udp_socket_for_rx(int port)
     return fd;
 }
 
-
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv)
+{
     uint64_t render_ts = 0;
     uint64_t cur_ts = 0;
     uint8_t buf[65536]; // Max UDP packet size
@@ -84,15 +84,18 @@ int main(int argc, char *argv[]) {
     float scale_y = 1.0;
     char *osd_port = getenv("OSD_PORT");
 
-    if (argc == 5)
+    osd_init(shift_x, shift_y, scale_x, scale_y);
+
+#ifdef __GST_CAIRO__
+    void* gst_thread_start(void *arg)
     {
-        shift_x = atoi(argv[1]);
-        shift_y = atoi(argv[2]);
-        scale_x = strtof(argv[3], NULL);
-        scale_y = strtof(argv[4], NULL);
+        gst_main(argc, argv);
+        return NULL;
     }
 
-    osd_init(shift_x, shift_y, scale_x, scale_y);
+    pthread_t tid;
+    pthread_create(&tid, NULL, gst_thread_start, NULL);
+#endif
 
     memset(fds, '\0', sizeof(fds));
     fd = open_udp_socket_for_rx(osd_port == NULL ? 14550 : atoi(osd_port));

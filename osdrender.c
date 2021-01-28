@@ -307,7 +307,7 @@ void draw_uav2d() {
                               osd_params.Atti_mp_panel)) {
     return;
   }
- 
+
   if (osd_params.Atti_mp_type == 0) {
     draw_radar();
   } else {
@@ -663,7 +663,7 @@ void draw_climb_rate() {
   {
       snprintf(tmp_str, sizeof(tmp_str), "%.0f", fabs(average_climb));
   }
- 
+
   write_string(tmp_str, x - 5, y, 0, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0,
                SIZE_TO_FONT[osd_params.ClimbRate_fontsize]);
 
@@ -1621,7 +1621,7 @@ void draw_altitude_scale() {
   }else{
       if (osd_params.Alt_Scale_type == 0) {
           alt_shown = osd_alt;
-          snprintf(tmp_str, sizeof(tmp_str), "AALT");
+          snprintf(tmp_str, sizeof(tmp_str), "AMSL");
       }else{
           alt_shown = osd_rel_alt;
           snprintf(tmp_str, sizeof(tmp_str), "RALT");
@@ -1631,7 +1631,7 @@ void draw_altitude_scale() {
   draw_vertical_scale(alt_shown * convert_distance, 40,
                       osd_params.Alt_Scale_align,
                       osd_params.Alt_Scale_posX,
-                      osd_params.Alt_Scale_posY, 100, 
+                      osd_params.Alt_Scale_posY, 100,
 		      5, 10, 5, 8, 11,
                       10000, 0);
   if ((osd_params.Alt_Scale_align == 1) && (posX > 15)) {
