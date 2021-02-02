@@ -341,6 +341,12 @@ typedef struct
     uint16_t WFBState_fontsize;
     uint16_t WFBState_align;
 
+    uint16_t OSDMessages_en;
+    uint16_t OSDMessages_panel;
+    uint16_t OSDMessages_posX;
+    uint16_t OSDMessages_posY;
+
+
 } osd_params_t;
 
 extern osd_params_t osd_params;

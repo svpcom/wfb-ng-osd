@@ -131,7 +131,7 @@ void render() {
 }
 
 // TODO: try if this is performance critical or not
-char tmp_str[50] = { 0 };
+char tmp_str[51] = { 0 };
 
 void RenderScreen(void) {
   do_converts();
@@ -178,6 +178,33 @@ void RenderScreen(void) {
 
   draw_panel_changed();
   draw_warning();
+  draw_osd_messages();
+}
+
+
+void draw_osd_messages()
+{
+    if (!enabledAndShownOnPanel(osd_params.OSDMessages_en,
+                                osd_params.OSDMessages_panel)) {
+        return;
+    }
+
+    int x = osd_params.OSDMessages_posX, y = osd_params.OSDMessages_posY;
+    int i = 0;
+    int p = (osd_message_queue_tail + 1) % OSD_MAX_MESSAGES;
+    int p_start = p;
+
+    do
+    {
+        osd_message_t *item = osd_message_queue + p;
+        if(item->message[0])
+        {
+            snprintf(tmp_str, sizeof(tmp_str), "%s", item->message);
+            write_string(tmp_str, x, y + 11 * i, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
+            i += 1;
+        }
+        p = (p + 1) % OSD_MAX_MESSAGES;
+    } while(p != p_start);
 }
 
 
@@ -272,7 +299,7 @@ void draw_radar() {
 
 void draw_home_direction() {
   if (!enabledAndShownOnPanel(osd_params.HomeDirection_enabled,
-                              osd_params.HomeDirection_panel)) {
+                              osd_params.HomeDirection_panel) || !osd_got_home) {
     return;
   }
   float bearing = osd_home_bearing - osd_heading;
@@ -563,46 +590,27 @@ void draw_time() {
 void draw_CWH(void) {
   char tmp_str[100] = { 0 };
 
-  if ((osd_got_home == 0) && (motor_armed) && (osd_fix_type > 1)) {
-      osd_home_lat = 55.233656; //osd_lat;
-      osd_home_lon = 37.739521; //osd_lon;
-      osd_alt_cnt = 0;
-      osd_got_home = 1;
-  }
-  else if (osd_got_home == 1) {
-    // JRChange: osd_home_alt: check for stable osd_alt (must be stable for 75*40ms = 3s)
-    // we can get the relative alt from mavlink directly.
-    if (osd_alt_cnt < 75) {
-      if (fabs(osd_alt_prev - osd_alt) > 0.5) {
-        osd_alt_cnt = 0;
-        osd_alt_prev = osd_alt;
-      } else {
-        if (++osd_alt_cnt >= 75) {
-          osd_home_alt = osd_alt;           // take this stable osd_alt as osd_home_alt
-        }
-      }
-    }
+  if(osd_got_home)
+  {
+      const double R = 6371e3; // metres
+      double f1 = osd_lat * D2R;  // convert to radians
+      double f2 = osd_home_lat * D2R;
+      double df = f2 - f1;
+      double dl = (osd_home_lon - osd_lon) * D2R;
 
+      // Haversine method
+      // https://www.movable-type.co.uk/scripts/latlong.html
 
-    const double R = 6371e3; // metres
-    double f1 = osd_lat * D2R;  // convert to radians
-    double f2 = osd_home_lat * D2R;
-    double df = f2 - f1;
-    double dl = (osd_home_lon - osd_lon) * D2R;
+      double a = sin(df/2) * sin(df/2) + cos(f1) * cos(f2) * sin(dl/2.0) * sin(dl/2.0);
+      osd_home_distance = 2 * R * atan2(sqrt(a), sqrt(1.0 - a));
 
-    // Haversine method
-    // https://www.movable-type.co.uk/scripts/latlong.html
-
-    double a = sin(df/2) * sin(df/2) + cos(f1) * cos(f2) * sin(dl/2.0) * sin(dl/2.0);
-    osd_home_distance = 2 * R * atan2(sqrt(a), sqrt(1.0 - a));
-
-    double y = sin(dl) * cos(f2);
-    double x = cos(f1) * sin(f2) - sin(f1) * cos(f2) * cos(dl);
-    osd_home_bearing = (uint32_t)(atan2(y, x) * R2D + 360.0) % 360;
+      double y = sin(dl) * cos(f2);
+      double x = cos(f1) * sin(f2) - sin(f1) * cos(f2) * cos(dl);
+      osd_home_bearing = (uint32_t)(atan2(y, x) * R2D + 360.0) % 360;
   }
 
   //distance
-  if (osd_params.CWH_home_dist_en == 1 && shownAtPanel(osd_params.CWH_home_dist_panel)) {
+  if (osd_params.CWH_home_dist_en == 1 && shownAtPanel(osd_params.CWH_home_dist_panel) && osd_got_home) {
     float tmp = osd_home_distance * convert_distance;
     if (tmp < convert_distance_divider)
       snprintf(tmp_str, sizeof(tmp_str), "H: %d%s", (int)tmp, dist_unit_short);
@@ -905,7 +913,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
     }
 
      // Put home direction
-     if (rr == home_dir) {
+     if (osd_got_home && rr == home_dir) {
          xs = ((long int)(r * width) / (long int)range) + x;
          write_filled_rectangle_lm(xs - 5, majtick_start + textoffset + 7, 10, 10, 0, 1);
          write_string("H", xs + 1, majtick_start + textoffset + 12, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 2);
@@ -921,7 +929,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
      /* } */
   }
 
-  if (home_dir > 0 && !home_drawn) {
+  if (osd_got_home && home_dir > 0 && !home_drawn) {
      if (((v > home_dir) && (v - home_dir < 180)) || ((v < home_dir) && (home_dir -v > 180)))
      {
          r = x - ((long int)(range_2 * width) / (long int)range);
@@ -1361,40 +1369,6 @@ void draw_warning(void) {
   write_string(warn_str, osd_params.Alarm_posX, osd_params.Alarm_posY, 0, 0, TEXT_VA_TOP, osd_params.Alarm_align, 0, SIZE_TO_FONT[osd_params.Alarm_fontsize]);
 }
 
-void debug_wps(void) {
-
-//    //debug
-//    uint16_t a = 20;
-//    for(int i=1; i<wp_counts; i++)
-//    {
-//        snprintf(tmp_str, sizeof(tmp_str), "WP%d X:%0.12f Y:%0.12f",
-//                         (int)wp_list[i].seq, (double)wp_list[i].x,
-//                          (double)wp_list[i].y);
-//        write_string(tmp_str, 10, a, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
-//        a += 15;
-//    }
-
-//    float uav_lat = osd_lat / 10000000.0f;
-//    float uav_lon = osd_lon / 10000000.0f;
-  float home_lat = osd_home_lat;
-  float home_lon = osd_home_lon;
-
-//    if(osd_fix_type > 1){
-//        snprintf(tmp_str, sizeof(tmp_str), "UAV X:%0.12f Y:%0.12f",(double)uav_lat,(double)uav_lon);
-//        write_string(tmp_str, 10, a, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
-//        a += 15;
-//    }
-
-  if (osd_got_home == 1) {
-//        snprintf(tmp_str, sizeof(tmp_str), "home X:%0.12f Y:%0.12f",(double)home_lat,(double)home_lon);
-//        write_string(tmp_str, 10, a, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
-//        a += 15;
-    snprintf(tmp_str, sizeof(tmp_str), "%0.5f %0.5f", (double)home_lat, (double)home_lon);
-    write_string(tmp_str, 70, 210, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
-  }
-
-  return;
-}
 
 void gen_overlay_rect(float lat, float lon, VECTOR4D_PTR vec) {
   //left:vec.x  top:vec.y  right:vec.z  bottom:vec.w

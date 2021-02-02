@@ -77,6 +77,15 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
             }
             break;
 
+            case MAVLINK_MSG_ID_HOME_POSITION:
+            {
+                osd_home_lat = mavlink_msg_home_position_get_latitude(&msg) / 1e7;
+                osd_home_lon = mavlink_msg_home_position_get_longitude(&msg) / 1e7;
+                osd_home_alt = mavlink_msg_home_position_get_altitude(&msg) / 1000;
+                osd_got_home = 1;
+                break;
+            }
+
             case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
             {
                 vtol_state = mavlink_msg_extended_sys_state_get_vtol_state(&msg);
@@ -125,8 +134,6 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 osd_groundspeed = mavlink_msg_vfr_hud_get_groundspeed(&msg);
                 osd_heading = mavlink_msg_vfr_hud_get_heading(&msg);                 // 0..360 deg, 0=north
                 osd_throttle = mavlink_msg_vfr_hud_get_throttle(&msg);
-                //if(osd_throttle > 100 && osd_throttle < 150) osd_throttle = 100;//Temporary fix for ArduPlane 2.28
-                //if(osd_throttle < 0 || osd_throttle > 150) osd_throttle = 0;//Temporary fix for ArduPlane 2.28
                 osd_alt = mavlink_msg_vfr_hud_get_alt(&msg);
                 osd_climb = mavlink_msg_vfr_hud_get_climb(&msg);
             }
@@ -218,6 +225,18 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 wfb_flags = mavlink_msg_radio_status_get_remnoise(&msg);
             }
             break;
+
+            case MAVLINK_MSG_ID_STATUSTEXT:
+            {
+                osd_message_queue_tail = (osd_message_queue_tail + 1) % OSD_MAX_MESSAGES;
+                osd_message_t *item = osd_message_queue + osd_message_queue_tail;
+                item->severity = mavlink_msg_statustext_get_severity(&msg);
+                mavlink_msg_statustext_get_text(&msg, item->message);
+                item->message[sizeof(item->message) - 1] = '\0';
+                printf("Message: %s\n", item->message);
+            }
+            break;
+
 
             default:
                 //Do nothing

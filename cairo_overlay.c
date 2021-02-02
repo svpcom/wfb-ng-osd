@@ -38,7 +38,8 @@ on_message (GstBus * bus, GstMessage * message, gpointer user_data)
     GMainLoop *loop = (GMainLoop *) user_data;
 
     switch (GST_MESSAGE_TYPE (message)) {
-    case GST_MESSAGE_ERROR:{
+    case GST_MESSAGE_ERROR:
+    {
         GError *err = NULL;
         gchar *debug;
 
@@ -47,7 +48,9 @@ on_message (GstBus * bus, GstMessage * message, gpointer user_data)
         g_main_loop_quit (loop);
         break;
     }
-    case GST_MESSAGE_WARNING:{
+
+    case GST_MESSAGE_WARNING:
+    {
         GError *err = NULL;
         gchar *debug;
 
@@ -56,9 +59,23 @@ on_message (GstBus * bus, GstMessage * message, gpointer user_data)
         g_main_loop_quit (loop);
         break;
     }
+
+    case GST_MESSAGE_STATE_CHANGED:
+    {
+        GstState old_state, new_state;
+
+        gst_message_parse_state_changed (message, &old_state, &new_state, NULL);
+        g_print ("gst %s: %s -> %s\n",
+                 GST_OBJECT_NAME (message->src),
+                 gst_element_state_get_name (old_state),
+                 gst_element_state_get_name (new_state));
+        break;
+    }
+
     case GST_MESSAGE_EOS:
         g_main_loop_quit (loop);
         break;
+
     default:
         break;
     }
@@ -121,22 +138,25 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
 {
     GstElement *pipeline;
     GstElement *cairo_overlay;
-    GstElement *source1, *source2, *source3, *adaptor1, /* *adaptor2, */ *sink;
+    GstElement *udpsrc, *rtpdepay, *decoder, *videoconvert, /* *adaptor2, */ *sink;
     GstCaps* caps = NULL;
-    char *rtp_port = getenv("RTP_PORT");
+    char *__rtp_port = getenv("RTP_PORT");
+    int rtp_port = __rtp_port == NULL ? 5600 : atoi(__rtp_port);
 
-    pipeline = gst_pipeline_new ("cairo-overlay-example");
+    printf("RTP_PORT=%d\n", rtp_port);
 
-    source1 = gst_element_factory_make ("udpsrc", "source1");
+    pipeline = gst_pipeline_new ("cairo-overlay-wfb");
+
+    udpsrc = gst_element_factory_make ("udpsrc", "udpsrc");
     caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264");
-    g_object_set(source1, "do-timestamp", TRUE, "port", rtp_port == NULL ? 5600 : atoi(rtp_port), "caps", caps, NULL);
+    g_object_set(udpsrc, "do-timestamp", TRUE, "port", rtp_port, "caps", caps, NULL);
 
-    source2 = gst_element_factory_make ("rtph264depay", "source2");
-    /* source3 = gst_element_factory_make ("vaapih264dec", "source3"); */
-    source3 = gst_element_factory_make ("avdec_h264", "source3");
+    rtpdepay = gst_element_factory_make ("rtph264depay", "rtpdepay");
+    /* decoder = gst_element_factory_make ("vaapih264dec", "decoder"); */
+    decoder = gst_element_factory_make ("avdec_h264", "decoder");
 
     /* Adaptors needed because cairooverlay only supports ARGB data */
-    adaptor1 = gst_element_factory_make ("videoconvert", "adaptor1");
+    videoconvert = gst_element_factory_make ("videoconvert", "videoconvert");
     cairo_overlay = gst_element_factory_make ("cairooverlay", "overlay");
     /* adaptor2 = gst_element_factory_make ("videoconvert", "adaptor2"); */
 
@@ -155,11 +175,11 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
                       G_CALLBACK (prepare_overlay), overlay_state);
 
     gst_bin_add_many (GST_BIN (pipeline),
-                      source1, source2, source3, adaptor1,
+                      udpsrc, rtpdepay, decoder, videoconvert,
                       cairo_overlay, /* adaptor2, */ sink, NULL);
 
-    if (!gst_element_link_many (source1, source2, source3,
-                                adaptor1, cairo_overlay, /* adaptor2, */ sink, NULL))
+    if (!gst_element_link_many (udpsrc, rtpdepay, decoder,
+                                videoconvert, cairo_overlay, /* adaptor2, */ sink, NULL))
     {
         g_warning ("Failed to link elements!");
     }

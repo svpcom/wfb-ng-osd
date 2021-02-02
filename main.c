@@ -55,6 +55,8 @@ int open_udp_socket_for_rx(int port)
         exit(1);
     }
 
+    printf("OSD_PORT=%d\n", port);
+
     int optval = 1;
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
 

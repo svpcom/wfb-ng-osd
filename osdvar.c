@@ -141,3 +141,6 @@ WAYPOINT wp_list[MAX_WAYPOINTS];
 
 int8_t osd_offset_Y = 0;
 int8_t osd_offset_X = 0;
+
+osd_message_t osd_message_queue[OSD_MAX_MESSAGES];
+int osd_message_queue_tail = -1;
