@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 #endif
 
     memset(fds, '\0', sizeof(fds));
-    fd = open_udp_socket_for_rx(osd_port == NULL ? 14550 : atoi(osd_port));
+    fd = open_udp_socket_for_rx(osd_port == NULL ? 14551 : atoi(osd_port));
 
     if(fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK) < 0)
     {
