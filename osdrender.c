@@ -390,7 +390,7 @@ void draw_home_latitude() {
     return;
   }
 
-  snprintf(tmp_str, sizeof(tmp_str), "H %0.5f", (double) osd_home_lat);
+  snprintf(tmp_str, sizeof(tmp_str), "H %0.6f", (double) osd_home_lat);
   write_string(tmp_str, osd_params.HomeLatitude_posX,
                osd_params.HomeLatitude_posY, 0, 0, TEXT_VA_TOP,
                osd_params.HomeLatitude_align, 0,
@@ -403,7 +403,7 @@ void draw_home_longitude() {
     return;
   }
 
-  snprintf(tmp_str, sizeof(tmp_str), "H %0.5f", (double) osd_home_lon);
+  snprintf(tmp_str, sizeof(tmp_str), "H %0.6f", (double) osd_home_lon);
   write_string(tmp_str, osd_params.HomeLongitude_posX,
                osd_params.HomeLongitude_posY, 0, 0, TEXT_VA_TOP,
                osd_params.HomeLongitude_align, 0,
@@ -459,7 +459,7 @@ void draw_gps_latitude() {
     return;
   }
 
-  snprintf(tmp_str, sizeof(tmp_str), "%0.5f", (double) osd_lat);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.6f", (double) osd_lat);
   write_string(tmp_str, osd_params.GpsLat_posX,
                osd_params.GpsLat_posY, 0, 0, TEXT_VA_TOP,
                osd_params.GpsLat_align, 0,
@@ -472,7 +472,7 @@ void draw_gps_longitude() {
     return;
   }
 
-  snprintf(tmp_str, sizeof(tmp_str), "%0.5f", (double) osd_lon);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.6f", (double) osd_lon);
   write_string(tmp_str, osd_params.GpsLon_posX,
                osd_params.GpsLon_posY, 0, 0, TEXT_VA_TOP,
                osd_params.GpsLon_align, 0,
@@ -528,7 +528,7 @@ void draw_gps2_latitude() {
     return;
   }
 
-  snprintf(tmp_str, sizeof(tmp_str), "%0.5f", (double) osd_lat2);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.6f", (double) osd_lat2);
   write_string(tmp_str, osd_params.Gps2Lat_posX,
                osd_params.Gps2Lat_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Gps2Lat_align, 0,
@@ -541,7 +541,7 @@ void draw_gps2_longitude() {
     return;
   }
 
-  snprintf(tmp_str, sizeof(tmp_str), "%0.5f", (double) osd_lon2);
+  snprintf(tmp_str, sizeof(tmp_str), "%0.6f", (double) osd_lon2);
   write_string(tmp_str, osd_params.Gps2Lon_posX,
                osd_params.Gps2Lon_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Gps2Lon_align, 0,
