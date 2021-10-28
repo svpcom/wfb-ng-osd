@@ -32,8 +32,8 @@
 #include <glib.h>
 #include "graphengine.h"
 
-// Comment it out to use xvimagesink
-#define USE_VAAPI_OUTPUT
+#define xstr(s) str(s)
+#define str(s) #s
 
 static gboolean
 on_message (GstBus * bus, GstMessage * message, gpointer user_data)
@@ -142,9 +142,7 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
     GstElement *pipeline;
     GstElement *cairo_overlay;
     GstElement *udpsrc, *rtpdepay, *decoder, *videoconvert, *sink;
-#ifndef USE_VAAPI_OUTPUT
     GstElement *adaptor2;
-#endif
     GstCaps* caps = NULL;
     char *__rtp_port = getenv("RTP_PORT");
     int rtp_port = __rtp_port == NULL ? 5600 : atoi(__rtp_port);
@@ -154,29 +152,21 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
     pipeline = gst_pipeline_new ("cairo-overlay-wfb");
 
     udpsrc = gst_element_factory_make ("udpsrc", "udpsrc");
-    caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264");
+    caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000");
     g_object_set(udpsrc, "do-timestamp", TRUE, "port", rtp_port, "caps", caps, NULL);
 
-    rtpdepay = gst_element_factory_make ("rtph264depay", "rtpdepay");
-    /* decoder = gst_element_factory_make ("vaapih264dec", "decoder"); */
-    decoder = gst_element_factory_make ("avdec_h264", "decoder");
+    rtpdepay = gst_element_factory_make ("rtp" xstr(VIDEO_CODEC) "depay", "rtpdepay");
+    /* decoder = gst_element_factory_make ("vaapi" xstr(VIDEO_CODEC) "dec", "decoder"); */
+    decoder = gst_element_factory_make ("avdec_" xstr(VIDEO_CODEC), "decoder");
 
     /* Adaptors needed because cairooverlay only supports ARGB data */
     videoconvert = gst_element_factory_make ("videoconvert", "videoconvert");
     cairo_overlay = gst_element_factory_make ("cairooverlay", "overlay");
-
-#ifdef USE_VAAPI_OUTPUT
-    sink = gst_element_factory_make ("vaapisink", "sink");
-    g_assert(sink);
-
-    g_object_set(sink, "sync", FALSE, "fullscreen", TRUE, NULL);
-#else
     adaptor2 = gst_element_factory_make ("videoconvert", "adaptor2");
+
     sink = gst_element_factory_make ("xvimagesink", "sink");
     g_assert(sink);
-
     g_object_set(sink, "sync", FALSE, NULL);
-#endif
 
     /* If failing, the element could not be created */
     g_assert (cairo_overlay);
@@ -190,16 +180,12 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
     gst_bin_add_many (GST_BIN (pipeline),
                       udpsrc, rtpdepay, decoder, videoconvert,
                       cairo_overlay,
-#ifndef USE_VAAPI_OUTPUT
 		      adaptor2,
-#endif
 		      sink, NULL);
 
     if (!gst_element_link_many (udpsrc, rtpdepay, decoder,
                                 videoconvert, cairo_overlay,
-#ifndef USE_VAAPI_OUTPUT
 				adaptor2,
-#endif
 				sink, NULL))
     {
         g_warning ("Failed to link elements!");

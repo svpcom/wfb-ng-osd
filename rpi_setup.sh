@@ -3,15 +3,19 @@ set -e
 set -x
 
 apt-get update
-apt-get install libraspberrypi0 libraspberrypi-bin gstreamer1.0-tools gstreamer1.0-plugins-good
+apt-get install build-essential libraspberrypi0 libraspberrypi-bin gstreamer1.0-tools gstreamer1.0-plugins-good
 
-cat > /lib/systemd/system/osd.service <<EOF
+make mode=rpi codec=h264
+
+cp -a osd fpv_video/{fpv_video,fpv_video.sh} /usr/bin
+
+cat > /etc/systemd/system/osd.service <<EOF
 [Unit]
 Description=FPV OSD
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/osd
+ExecStart=/bin/openvt -s -e -- bash -c 'TERM=linux setterm --blank force --clear all --cursor off /dev/tty && exec /usr/bin/osd'
 Type=simple
 Restart=always
 RestartSec=1s
@@ -22,7 +26,7 @@ KillMode=control-group
 WantedBy=multi-user.target
 EOF
 
-cat > /lib/systemd/system/fpv-video.service <<EOF
+cat > /etc/systemd/system/fpv-video.service <<EOF
 [Unit]
 Description=FPV video
 After=network-online.target
@@ -38,8 +42,6 @@ KillMode=control-group
 [Install]
 WantedBy=multi-user.target
 EOF
-
-tar xzvf wifibroadcast_osd.tar.gz -C /usr/bin
 
 systemctl daemon-reload
 systemctl enable fpv-video
