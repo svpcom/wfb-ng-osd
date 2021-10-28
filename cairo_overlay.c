@@ -148,6 +148,7 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
     int rtp_port = __rtp_port == NULL ? 5600 : atoi(__rtp_port);
 
     printf("RTP_PORT=%d\n", rtp_port);
+    printf("VIDEO_CODEC=" xstr(VIDEO_CODEC) "\n");
 
     pipeline = gst_pipeline_new ("cairo-overlay-wfb");
 
