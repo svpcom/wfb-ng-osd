@@ -1,8 +1,7 @@
 mode?=gst
-codec?=h264
 
 ifeq ($(mode), gst)
-CFLAGS += -Wall -pthread -std=gnu99 -D__GST_CAIRO__ -fPIC -DVIDEO_CODEC=$(codec) $(shell pkg-config --cflags cairo) $(shell pkg-config --cflags glib-2.0) $(shell pkg-config --cflags gstreamer-1.0)
+CFLAGS += -Wall -pthread -std=gnu99 -D__GST_CAIRO__ -fPIC $(shell pkg-config --cflags cairo) $(shell pkg-config --cflags glib-2.0) $(shell pkg-config --cflags gstreamer-1.0)
 LDFLAGS += $(shell pkg-config --libs glib-2.0) $(shell pkg-config --libs gstreamer-1.0) $(shell pkg-config --libs cairo) $(shell pkg-config --libs gstreamer-video-1.0) -lpthread -lrt -lm
 OBJS = main.o osdrender.o osdmavlink.o graphengine.o UAVObj.o m2dlib.o math3d.o osdconfig.o osdvar.o fonts.o font_outlined8x14.o font_outlined8x8.o cairo_overlay.o
 else

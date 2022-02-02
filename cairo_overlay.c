@@ -18,6 +18,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#define _GNU_SOURCE
 
 #include <stdint.h>
 #include <pthread.h>
@@ -31,9 +32,6 @@
 
 #include <glib.h>
 #include "graphengine.h"
-
-#define xstr(s) str(s)
-#define str(s) #s
 
 static gboolean
 on_message (GstBus * bus, GstMessage * message, gpointer user_data)
@@ -103,8 +101,7 @@ prepare_overlay (GstElement * overlay, GstCaps * caps, gpointer user_data)
     state->valid = gst_video_info_from_caps (&state->vinfo, caps);
 }
 
-/* Draw the overlay.
- * This function draws a cute "beating" heart. */
+/* Draw the overlay. */
 static void
 draw_overlay (GstElement * overlay, cairo_t * cr, guint64 timestamp,
               guint64 duration, gpointer user_data)
@@ -139,59 +136,40 @@ draw_overlay (GstElement * overlay, cairo_t * cr, guint64 timestamp,
 static GstElement *
 setup_gst_pipeline (CairoOverlayState * overlay_state)
 {
+    char *pipeline_str;
     GstElement *pipeline;
     GstElement *cairo_overlay;
-    GstElement *udpsrc, *rtpdepay, *decoder, *videoconvert, *sink;
-    GstElement *adaptor2;
-    GstCaps* caps = NULL;
+
     char *__rtp_port = getenv("RTP_PORT");
+    char *video_codec = getenv("VIDEO_CODEC");
     int rtp_port = __rtp_port == NULL ? 5600 : atoi(__rtp_port);
+    video_codec = video_codec == NULL ? "h264" : video_codec;
 
     printf("RTP_PORT=%d\n", rtp_port);
-    printf("VIDEO_CODEC=" xstr(VIDEO_CODEC) "\n");
+    printf("VIDEO_CODEC=%s\n", video_codec);
 
-    pipeline = gst_pipeline_new ("cairo-overlay-wfb");
+    asprintf(&pipeline_str,
+             "udpsrc port=%d caps=\"application/x-rtp, media=(string)video\" ! "
+             "rtp%sdepay ! "
+             "avdec_%s ! "
+             "vaapipostproc ! "
+             "video/x-raw,width=1920 ! "
+             "cairooverlay name=overlay ! "
+             "vaapipostproc ! "
+             "xvimagesink sync=false",
+             rtp_port, video_codec, video_codec);
 
-    udpsrc = gst_element_factory_make ("udpsrc", "udpsrc");
-    caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000");
-    g_object_set(udpsrc, "do-timestamp", TRUE, "port", rtp_port, "caps", caps, NULL);
-
-    rtpdepay = gst_element_factory_make ("rtp" xstr(VIDEO_CODEC) "depay", "rtpdepay");
-    /* decoder = gst_element_factory_make ("vaapi" xstr(VIDEO_CODEC) "dec", "decoder"); */
-    decoder = gst_element_factory_make ("avdec_" xstr(VIDEO_CODEC), "decoder");
-
-    /* Adaptors needed because cairooverlay only supports ARGB data */
-    videoconvert = gst_element_factory_make ("videoconvert", "videoconvert");
-    cairo_overlay = gst_element_factory_make ("cairooverlay", "overlay");
-    adaptor2 = gst_element_factory_make ("videoconvert", "adaptor2");
-
-    sink = gst_element_factory_make ("xvimagesink", "sink");
-    g_assert(sink);
-    g_object_set(sink, "sync", FALSE, NULL);
-
-    /* If failing, the element could not be created */
-    g_assert (cairo_overlay);
+    pipeline = gst_parse_launch(pipeline_str, NULL);
+    free(pipeline_str);
 
     /* Hook up the necessary signals for cairooverlay */
+    cairo_overlay = gst_bin_get_by_name(GST_BIN(pipeline), "overlay");
     g_signal_connect (cairo_overlay, "draw",
                       G_CALLBACK (draw_overlay), overlay_state);
     g_signal_connect (cairo_overlay, "caps-changed",
                       G_CALLBACK (prepare_overlay), overlay_state);
 
-    gst_bin_add_many (GST_BIN (pipeline),
-                      udpsrc, rtpdepay, decoder, videoconvert,
-                      cairo_overlay,
-		      adaptor2,
-		      sink, NULL);
-
-    if (!gst_element_link_many (udpsrc, rtpdepay, decoder,
-                                videoconvert, cairo_overlay,
-				adaptor2,
-				sink, NULL))
-    {
-        g_warning ("Failed to link elements!");
-    }
-
+    gst_object_unref(cairo_overlay);
     return pipeline;
 }
 
