@@ -160,14 +160,12 @@ void drawBox(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
  *
  * @param       x               x coordinate
  * @param       y               y coordinate
- * @param       mmode   0 = clear, 1 = set, 2 = toggle
- * @param       lmode   0 = black, 1 = white, 2 = toggle
+ * @param       opaq    0 = transparent, 1 = opaque
+ * @param       color   0 = black, 1 = main, 2 = warn
  */
-void inline write_pixel_lm(int x, int y, int mmode, int lmode){
+void inline write_pixel_lm(int x, int y, int opaq, int color){
     CHECK_COORDS(x, y);
-    assert(mmode < 2 && lmode < 2);
-
-    uint8_t mode = (mmode << 1) | lmode;
+    assert((opaq == 0 || opaq == 1) && (color >= 0 && color <= 2));
 
 #ifdef __BCM_OPENVG__
     uint32_t *ptr = ((uint32_t*)video_buf_int) + GRAPHICS_WIDTH * (GRAPHICS_HEIGHT - y - 1) + x;
@@ -175,18 +173,24 @@ void inline write_pixel_lm(int x, int y, int mmode, int lmode){
     uint32_t *ptr = ((uint32_t*)video_buf_int) + GRAPHICS_WIDTH * (y) + x;
 #endif
 
-    switch(mode)
+    if (opaq == 0){
+      *ptr = 0u;
+      return;
+    }
+
+    switch(color)
     {
-    case 0: //transparent
-    case 1: //transparent
-        *ptr = 0u;
-        break;
-    case 2: //black
+    case 0: //black
         *ptr = 0xff000000u;
         break;
-    case 3: // monochrome crt green
+
+    case 1: // monochrome crt green
         *ptr = 0xff00ff41u;
         break;
+
+    case 2: // amber
+      *ptr = 0xffff0000u;
+      break;
     }
 }
 
@@ -197,13 +201,13 @@ void inline write_pixel_lm(int x, int y, int mmode, int lmode){
  * @param       x0              x0 coordinate
  * @param       x1              x1 coordinate
  * @param       y               y coordinate
- * @param       lmode   0 = clear, 1 = set, 2 = toggle
- * @param       mmode   0 = clear, 1 = set, 2 = toggle
+ * @param       color  0 = black, 1 = main, 2 = warn
+ * @param       opaq   0 = transparent, 1 = opaque
  */
-void write_hline_lm(int x0, int x1, int y, int lmode, int mmode) {
+void write_hline_lm(int x0, int x1, int y, int color, int opaq) {
     int x;
     if (x1 < x0) SWAP(x0, x1);
-    for(x = x0; x <= x1; x++) write_pixel_lm(x, y, mmode, lmode);
+    for(x = x0; x <= x1; x++) write_pixel_lm(x, y, opaq, color);
 }
 
 /**
@@ -216,9 +220,9 @@ void write_hline_lm(int x0, int x1, int y, int lmode, int mmode) {
  * @param       endcap0         0 = none, 1 = single pixel, 2 = full cap
  * @param       endcap1         0 = none, 1 = single pixel, 2 = full cap
  * @param       mode            0 = black outline, white body, 1 = white outline, black body
- * @param       mmode           0 = clear, 1 = set, 2 = toggle
+ * @param       opaq           0 = clear, 1 = set, 2 = toggle
  */
-void write_hline_outlined(int x0, int x1, int y, int endcap0, int endcap1, int mode, int mmode) {
+void write_hline_outlined(int x0, int x1, int y, int endcap0, int endcap1, int mode, int opaq, int color) {
   int stroke, fill;
 
   SETUP_STROKE_FILL(stroke, fill, mode);
@@ -226,12 +230,12 @@ void write_hline_outlined(int x0, int x1, int y, int endcap0, int endcap1, int m
     SWAP(x0, x1);
   }
   // Draw the main body of the line.
-  write_hline_lm(x0 + 1, x1 - 1, y - 1, stroke, mmode);
-  write_hline_lm(x0 + 1, x1 - 1, y + 1, stroke, mmode);
-  write_hline_lm(x0 + 1, x1 - 1, y, fill, mmode);
+  write_hline_lm(x0 + 1, x1 - 1, y - 1, stroke, opaq);
+  write_hline_lm(x0 + 1, x1 - 1, y + 1, stroke, opaq);
+  write_hline_lm(x0 + 1, x1 - 1, y, fill, opaq);
   // Draw the endcaps, if any.
-  DRAW_ENDCAP_HLINE(endcap0, x0, y, stroke, fill, mmode);
-  DRAW_ENDCAP_HLINE(endcap1, x1, y, stroke, fill, mmode);
+  DRAW_ENDCAP_HLINE(endcap0, x0, y, stroke, fill, opaq);
+  DRAW_ENDCAP_HLINE(endcap1, x1, y, stroke, fill, opaq);
 }
 
 
@@ -241,15 +245,15 @@ void write_hline_outlined(int x0, int x1, int y, int endcap0, int endcap1, int m
  * @param       x               x coordinate
  * @param       y0              y0 coordinate
  * @param       y1              y1 coordinate
- * @param       lmode   0 = clear, 1 = set, 2 = toggle
- * @param       mmode   0 = clear, 1 = set, 2 = toggle
+ * @param       color  0 = black, 1 = main, 2 = warn
+ * @param       opaq   0 = transparent, 1 = opaque
  */
-void write_vline_lm(int x, int y0, int y1, int lmode, int mmode) {
+void write_vline_lm(int x, int y0, int y1, int color, int opaq) {
     // TODO: an optimisation would compute the masks and apply to
     // both buffers simultaneously.
     int y;
     if (y1 < y0) SWAP(y0, y1);
-    for(y = y0; y <= y1; y++) write_pixel_lm(x, y, mmode, lmode);
+    for(y = y0; y <= y1; y++) write_pixel_lm(x, y, opaq, color);
 }
 
 /**
@@ -262,9 +266,9 @@ void write_vline_lm(int x, int y0, int y1, int lmode, int mmode) {
  * @param       endcap0         0 = none, 1 = single pixel, 2 = full cap
  * @param       endcap1         0 = none, 1 = single pixel, 2 = full cap
  * @param       mode            0 = black outline, white body, 1 = white outline, black body
- * @param       mmode           0 = clear, 1 = set, 2 = toggle
+ * @param       opaq           0 = clear, 1 = set, 2 = toggle
  */
-void write_vline_outlined(int x, int y0, int y1, int endcap0, int endcap1, int mode, int mmode) {
+void write_vline_outlined(int x, int y0, int y1, int endcap0, int endcap1, int mode, int opaq, int color) {
   int stroke, fill;
 
   if (y0 > y1) {
@@ -272,12 +276,12 @@ void write_vline_outlined(int x, int y0, int y1, int endcap0, int endcap1, int m
   }
   SETUP_STROKE_FILL(stroke, fill, mode);
   // Draw the main body of the line.
-  write_vline_lm(x - 1, y0 + 1, y1 - 1, stroke, mmode);
-  write_vline_lm(x + 1, y0 + 1, y1 - 1, stroke, mmode);
-  write_vline_lm(x, y0 + 1, y1 - 1, fill, mmode);
+  write_vline_lm(x - 1, y0 + 1, y1 - 1, stroke, opaq);
+  write_vline_lm(x + 1, y0 + 1, y1 - 1, stroke, opaq);
+  write_vline_lm(x, y0 + 1, y1 - 1, fill, opaq);
   // Draw the endcaps, if any.
-  DRAW_ENDCAP_VLINE(endcap0, x, y0, stroke, fill, mmode);
-  DRAW_ENDCAP_VLINE(endcap1, x, y1, stroke, fill, mmode);
+  DRAW_ENDCAP_VLINE(endcap0, x, y0, stroke, fill, opaq);
+  DRAW_ENDCAP_VLINE(endcap1, x, y1, stroke, fill, opaq);
 }
 
 
@@ -288,16 +292,16 @@ void write_vline_outlined(int x, int y0, int y1, int endcap0, int endcap1, int m
  * @param       y               y coordinate (top)
  * @param       width   rectangle width
  * @param       height  rectangle height
- * @param       lmode   0 = clear, 1 = set, 2 = toggle
- * @param       mmode   0 = clear, 1 = set, 2 = toggle
+ * @param       color  0 = black, 1 = main, 2 = warn
+ * @param       opaq   0 = transparent, 1 = opaque
  */
-void write_filled_rectangle_lm(int x, int y, int width, int height, int lmode, int mmode) {
+void write_filled_rectangle_lm(int x, int y, int width, int height, int color, int opaq) {
     int i, j;
     for(j=y; j <= y + height; j++)
     {
         for(i=x; i <= x + width; i++)
         {
-            write_pixel_lm(i, j, mmode, lmode);
+            write_pixel_lm(i, j, opaq, color);
         }
     }
 }
@@ -311,13 +315,13 @@ void write_filled_rectangle_lm(int x, int y, int width, int height, int lmode, i
  * @param       width   rectangle width
  * @param       height  rectangle height
  * @param       mode    0 = black outline, white body, 1 = white outline, black body
- * @param       mmode   0 = clear, 1 = set, 2 = toggle
+ * @param       opaq   0 = transparent, 1 = opaque
  */
-void write_rectangle_outlined(int x, int y, int width, int height, int mode, int mmode) {
-  write_hline_outlined(x, x + width, y, ENDCAP_ROUND, ENDCAP_ROUND, mode, mmode);
-  write_hline_outlined(x, x + width, y + height, ENDCAP_ROUND, ENDCAP_ROUND, mode, mmode);
-  write_vline_outlined(x, y, y + height, ENDCAP_ROUND, ENDCAP_ROUND, mode, mmode);
-  write_vline_outlined(x + width, y, y + height, ENDCAP_ROUND, ENDCAP_ROUND, mode, mmode);
+void write_rectangle_outlined(int x, int y, int width, int height, int mode, int opaq) {
+  write_hline_outlined(x, x + width, y, ENDCAP_ROUND, ENDCAP_ROUND, mode, opaq, 1);
+  write_hline_outlined(x, x + width, y + height, ENDCAP_ROUND, ENDCAP_ROUND, mode, opaq, 1);
+  write_vline_outlined(x, y, y + height, ENDCAP_ROUND, ENDCAP_ROUND, mode, opaq, 1);
+  write_vline_outlined(x + width, y, y + height, ENDCAP_ROUND, ENDCAP_ROUND, mode, opaq, 1);
 }
 
 
@@ -330,9 +334,9 @@ void write_rectangle_outlined(int x, int y, int width, int height, int mode, int
  * @param       dashp   dash period (pixels) - zero for no dash
  * @param       bmode   0 = 4-neighbour border, 1 = 8-neighbour border
  * @param       mode    0 = black outline, white body, 1 = white outline, black body
- * @param       mmode   0 = clear, 1 = set, 2 = toggle
+ * @param       opaq   0 = transparent, 1 = opaque
  */
-void write_circle_outlined(int cx, int cy, int r, int dashp, int bmode, int mode, int mmode) {
+void write_circle_outlined(int cx, int cy, int r, int dashp, int bmode, int mode, int opaq, int color) {
   int stroke, fill;
 
   CHECK_COORDS(cx, cy);
@@ -342,14 +346,14 @@ void write_circle_outlined(int cx, int cy, int r, int dashp, int bmode, int mode
   int error = -r, x = r, y = 0;
   while (x >= y) {
     if (dashp == 0 || (y % dashp) < (dashp / 2)) {
-        CIRCLE_PLOT_8(cx, cy, x + 1, y, mmode, stroke);
-        CIRCLE_PLOT_8(cx, cy, x, y + 1, mmode, stroke);
-        CIRCLE_PLOT_8(cx, cy, x - 1, y, mmode, stroke);
-        CIRCLE_PLOT_8(cx, cy, x, y - 1, mmode, stroke);
+        CIRCLE_PLOT_8(cx, cy, x + 1, y, opaq, stroke);
+        CIRCLE_PLOT_8(cx, cy, x, y + 1, opaq, stroke);
+        CIRCLE_PLOT_8(cx, cy, x - 1, y, opaq, stroke);
+        CIRCLE_PLOT_8(cx, cy, x, y - 1, opaq, stroke);
 
       if (bmode == 1) {
-          CIRCLE_PLOT_8(cx, cy, x + 1, y + 1, mmode, stroke);
-          CIRCLE_PLOT_8(cx, cy, x - 1, y - 1, mmode, stroke);
+          CIRCLE_PLOT_8(cx, cy, x + 1, y + 1, opaq, stroke);
+          CIRCLE_PLOT_8(cx, cy, x - 1, y - 1, opaq, stroke);
       }
     }
     error += (y * 2) + 1;
@@ -364,7 +368,7 @@ void write_circle_outlined(int cx, int cy, int r, int dashp, int bmode, int mode
   y     = 0;
   while (x >= y) {
     if (dashp == 0 || (y % dashp) < (dashp / 2)) {
-        CIRCLE_PLOT_8(cx, cy, x, y, mmode, fill);
+        CIRCLE_PLOT_8(cx, cy, x, y, opaq, fill);
     }
     error += (y * 2) + 1;
     y++;
@@ -384,10 +388,10 @@ void write_circle_outlined(int cx, int cy, int r, int dashp, int bmode, int mode
  * @param       y0              first y coordinate
  * @param       x1              second x coordinate
  * @param       y1              second y coordinate
- * @param       mmode   0 = clear, 1 = set, 2 = toggle
- * @param       lmode   0 = clear, 1 = set, 2 = toggle
+ * @param       opaq   0 = transparent, 1 = opaque
+ * @param       color  0 = black, 1 = main, 2 = warn
  */
-void write_line_lm(int x0, int y0, int x1, int y1, int mmode, int lmode) {
+void write_line_lm(int x0, int y0, int x1, int y1, int opaq, int color) {
   // Based on http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
   int steep = abs(y1 - y0) > abs(x1 - x0);
 
@@ -412,9 +416,9 @@ void write_line_lm(int x0, int y0, int x1, int y1, int mmode, int lmode) {
   }
   for (x = x0; x <= x1; x++) {
     if (steep) {
-        write_pixel_lm(y, x, mmode, lmode);
+        write_pixel_lm(y, x, opaq, color);
     } else {
-        write_pixel_lm(x, y, mmode, lmode);
+        write_pixel_lm(x, y, opaq, color);
     }
     error -= deltay;
     if (error < 0) {
@@ -435,11 +439,11 @@ void write_line_lm(int x0, int y0, int x1, int y1, int mmode, int lmode) {
  * @param       endcap0         0 = none, 1 = single pixel, 2 = full cap
  * @param       endcap1         0 = none, 1 = single pixel, 2 = full cap
  * @param       mode            0 = black outline, white body, 1 = white outline, black body
- * @param       mmode           0 = clear, 1 = set, 2 = toggle
+ * @param       opaq           0 = clear, 1 = set, 2 = toggle
  */
 void write_line_outlined(int x0, int y0, int x1, int y1,
                          __attribute__((unused)) int endcap0, __attribute__((unused)) int endcap1,
-                         int mode, int mmode) {
+                         int mode, int opaq) {
   // Based on http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
   // This could be improved for speed.
   int omode, imode;
@@ -474,15 +478,15 @@ void write_line_outlined(int x0, int y0, int x1, int y1,
   // Draw the outline.
   for (x = x0; x <= x1; x++) {
     if (steep) {
-      write_pixel_lm(y - 1, x, mmode, omode);
-      write_pixel_lm(y + 1, x, mmode, omode);
-      write_pixel_lm(y, x - 1, mmode, omode);
-      write_pixel_lm(y, x + 1, mmode, omode);
+      write_pixel_lm(y - 1, x, opaq, omode);
+      write_pixel_lm(y + 1, x, opaq, omode);
+      write_pixel_lm(y, x - 1, opaq, omode);
+      write_pixel_lm(y, x + 1, opaq, omode);
     } else {
-      write_pixel_lm(x - 1, y, mmode, omode);
-      write_pixel_lm(x + 1, y, mmode, omode);
-      write_pixel_lm(x, y - 1, mmode, omode);
-      write_pixel_lm(x, y + 1, mmode, omode);
+      write_pixel_lm(x - 1, y, opaq, omode);
+      write_pixel_lm(x + 1, y, opaq, omode);
+      write_pixel_lm(x, y - 1, opaq, omode);
+      write_pixel_lm(x, y + 1, opaq, omode);
     }
     error -= deltay;
     if (error < 0) {
@@ -495,9 +499,9 @@ void write_line_outlined(int x0, int y0, int x1, int y1,
   y     = y0;
   for (x = x0; x <= x1; x++) {
     if (steep) {
-      write_pixel_lm(y, x, mmode, imode);
+      write_pixel_lm(y, x, opaq, imode);
     } else {
-      write_pixel_lm(x, y, mmode, imode);
+      write_pixel_lm(x, y, opaq, imode);
     }
     error -= deltay;
     if (error < 0) {
@@ -518,12 +522,12 @@ void write_line_outlined(int x0, int y0, int x1, int y1,
  * @param       endcap0         0 = none, 1 = single pixel, 2 = full cap
  * @param       endcap1         0 = none, 1 = single pixel, 2 = full cap
  * @param       mode            0 = black outline, white body, 1 = white outline, black body
- * @param       mmode           0 = clear, 1 = set, 2 = toggle
+ * @param       opaq           0 = clear, 1 = set, 2 = toggle
  * @param       dots			0 = not dashed, > 0 = # of set/unset dots for the dashed innards
  */
 void write_line_outlined_dashed(int x0, int y0, int x1, int y1,
                                 __attribute__((unused)) int endcap0, __attribute__((unused)) int endcap1,
-                                int mode, int mmode, int dots) {
+                                int mode, int opaq, int dots) {
   // Based on http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
   // This could be improved for speed.
   int omode, imode;
@@ -558,15 +562,15 @@ void write_line_outlined_dashed(int x0, int y0, int x1, int y1,
   // Draw the outline.
   for (x = x0; x <= x1; x++) {
     if (steep) {
-      write_pixel_lm(y - 1, x, mmode, omode);
-      write_pixel_lm(y + 1, x, mmode, omode);
-      write_pixel_lm(y, x - 1, mmode, omode);
-      write_pixel_lm(y, x + 1, mmode, omode);
+      write_pixel_lm(y - 1, x, opaq, omode);
+      write_pixel_lm(y + 1, x, opaq, omode);
+      write_pixel_lm(y, x - 1, opaq, omode);
+      write_pixel_lm(y, x + 1, opaq, omode);
     } else {
-      write_pixel_lm(x - 1, y, mmode, omode);
-      write_pixel_lm(x + 1, y, mmode, omode);
-      write_pixel_lm(x, y - 1, mmode, omode);
-      write_pixel_lm(x, y + 1, mmode, omode);
+      write_pixel_lm(x - 1, y, opaq, omode);
+      write_pixel_lm(x + 1, y, opaq, omode);
+      write_pixel_lm(x, y - 1, opaq, omode);
+      write_pixel_lm(x, y + 1, opaq, omode);
     }
     error -= deltay;
     if (error < 0) {
@@ -585,9 +589,9 @@ void write_line_outlined_dashed(int x0, int y0, int x1, int y1,
     }
     if (draw % 2) {
       if (steep) {
-        write_pixel_lm(y, x, mmode, imode);
+        write_pixel_lm(y, x, opaq, imode);
       } else {
-        write_pixel_lm(x, y, mmode, imode);
+        write_pixel_lm(x, y, opaq, imode);
       }
     }
     error -= deltay;
@@ -598,8 +602,6 @@ void write_line_outlined_dashed(int x0, int y0, int x1, int y1,
   }
 }
 
-void write_triangle_filled(int x0, int y0, int x1, int y1, int x2, int y2) {
-}
 
 void write_triangle_wire(int x0, int y0, int x1, int y1, int x2, int y2) {
   write_line_lm(x0, y0, x1, y1, 1, 1);
@@ -640,7 +642,7 @@ int fetch_font_info(uint8_t ch, int font, struct FontEntry *font_info, char *loo
  * @param       y       y coordinate (top)
  * @param       font    font to use
  */
-void write_char16(char ch, int x, int y, int font) {
+void write_char16(char ch, int x, int y, int font, int color) {
   struct FontEntry font_info;
   fetch_font_info(0, font, &font_info, NULL);
 
@@ -666,7 +668,7 @@ void write_char16(char ch, int x, int y, int font) {
         for(int dx = 0; dx < font_info.width; dx++) {
             uint16_t xshift = font_info.width - 1;
             if (mask & (1 << (xshift - dx)))
-                write_pixel_lm(x + dx + 1, y + dy + 1, 1, (levels & (1 << (xshift - dx))) ? 1 : 0);
+              write_pixel_lm(x + dx + 1, y + dy + 1, 1, (levels & (1 << (xshift - dx))) ? color : 0);
         }
     }
   }
@@ -682,7 +684,7 @@ void write_char16(char ch, int x, int y, int font) {
  * @param       flags   flags to write with
  * @param       font    font to use
  */
-void write_char(char ch, int x, int y, int flags, int font) {
+void write_char(char ch, int x, int y, int flags, int font, int color) {
   struct FontEntry font_info;
   char lookup = 0;
 
@@ -706,7 +708,7 @@ void write_char(char ch, int x, int y, int flags, int font) {
             }
             mask = font_info.data[row];
             if (mask & (1 << (xshift - dx)))
-                write_pixel_lm(x + dx, y + dy, 1, (levels & (1 << (xshift - dx))) ? 1 : 0);
+              write_pixel_lm(x + dx, y + dy, 1, (levels & (1 << (xshift - dx))) ? color : 0);
         }
     }
   }
@@ -758,7 +760,13 @@ void calc_text_dimensions(char *str, struct FontEntry font, int xs, int ys, stru
  * @param       flags   flags (passed to write_char)
  * @param       font    font
  */
-void write_string(char *str, int x, int y, int xs, int ys, int va, int ha, int flags, int font) {
+
+void write_string(char *str, int x, int y, int xs, int ys, int va, int ha, int flags, int font)
+{
+  write_color_string(str, x, y, xs, ys, va, ha, flags, font, 1);
+}
+
+void write_color_string(char *str, int x, int y, int xs, int ys, int va, int ha, int flags, int font, int color) {
 
   int xx = 0, yy = 0, xx_original = 0;
   struct FontEntry font_info;
@@ -799,9 +807,9 @@ void write_string(char *str, int x, int y, int xs, int ys, int va, int ha, int f
     } else {
       if (xx >= GRAPHICS_LEFT && xx < GRAPHICS_RIGHT) {
         if (font_info.id < 2) {
-          write_char(*str, xx, yy, flags, font);
+          write_char(*str, xx, yy, flags, font, color);
         } else {
-          write_char16(*str, xx, yy, font);
+          write_char16(*str, xx, yy, font, color);
         }
       }
       xx += font_info.width + xs;

@@ -86,7 +86,7 @@ void cal_vars(void);
 
 void draw_vertical_scale(float v, int range, int halign, int x, int y, int height, int mintick_step,
                          int majtick_step, int mintick_len, int majtick_len,
-                         int boundtick_len, __attribute__((unused)) int max_val, int flags);
+                         int boundtick_len, __attribute__((unused)) int max_val, int flags, int min_val);
 
 void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y, int mintick_step,
                          int majtick_step, int mintick_len, int majtick_len,

@@ -151,7 +151,10 @@ void RenderScreen(void) {
   draw_relative_altitude();
   draw_speed_scale();
   //draw_vtol_speed();
-  draw_ground_speed();
+  if (vtol_state == MAV_VTOL_STATE_TRANSITION_TO_FW || vtol_state == MAV_VTOL_STATE_FW || mav_type == MAV_TYPE_FIXED_WING)
+  {
+    draw_ground_speed();
+  }
   //draw_air_speed();
   draw_home_direction();
   draw_uav2d();
@@ -218,7 +221,7 @@ void draw_simple_attitude() {
   write_line_outlined(x - radius - 1, y, x - 2 * radius - 1, y, 0, 0, 0, 1);
   write_line_outlined(x + radius - 1, y, x + 2 * radius + 1, y, 0, 0, 0, 1);
   write_line_outlined(x, y - radius - 1, x, y - 2 * radius, 0, 0, 0, 1);
-  write_circle_outlined(x, y, radius, 0, 1, 0, 1);
+  write_circle_outlined(x, y, radius, 0, 1, 0, 1, 1);
 
   Transform_Polygon2D(&simple_attitude, -osd_roll, 0, osd_pitch);
 
@@ -416,9 +419,12 @@ void draw_gps_status() {
     return;
   }
 
+  int color = 1;
+
   switch (osd_fix_type) {
   case NO_GPS:
   case NO_FIX:
+    color = 2;
     snprintf(tmp_str, sizeof(tmp_str), "NOFIX");
     break;
   case GPS_OK_FIX_2D:
@@ -431,13 +437,15 @@ void draw_gps_status() {
     snprintf(tmp_str, sizeof(tmp_str), "D3D-%d", (int) osd_satellites_visible);
     break;
   default:
+    color = 2;
     snprintf(tmp_str, sizeof(tmp_str), "NOGPS");
     break;
   }
-  write_string(tmp_str, osd_params.GpsStatus_posX,
-               osd_params.GpsStatus_posY, 0, 0, TEXT_VA_TOP,
-               osd_params.GpsStatus_align, 0,
-               SIZE_TO_FONT[osd_params.GpsStatus_fontsize]);
+  write_color_string(tmp_str, osd_params.GpsStatus_posX,
+                     osd_params.GpsStatus_posY, 0, 0, TEXT_VA_TOP,
+                     osd_params.GpsStatus_align, 0,
+                     SIZE_TO_FONT[osd_params.GpsStatus_fontsize],
+                     color);
 }
 
 void draw_gps_hdop() {
@@ -485,9 +493,12 @@ void draw_gps2_status() {
     return;
   }
 
+  int color = 1;
+
   switch (osd_fix_type2) {
   case NO_GPS:
   case NO_FIX:
+    color = 2;
     snprintf(tmp_str, sizeof(tmp_str), "NOFIX");
     break;
   case GPS_OK_FIX_2D:
@@ -500,13 +511,15 @@ void draw_gps2_status() {
     snprintf(tmp_str, sizeof(tmp_str), "D3D-%d", (int) osd_satellites_visible2);
     break;
   default:
+    color = 2;
     snprintf(tmp_str, sizeof(tmp_str), "NOGPS");
     break;
   }
-  write_string(tmp_str, osd_params.Gps2Status_posX,
-               osd_params.Gps2Status_posY, 0, 0, TEXT_VA_TOP,
-               osd_params.Gps2Status_align, 0,
-               SIZE_TO_FONT[osd_params.Gps2Status_fontsize]);
+  write_color_string(tmp_str, osd_params.Gps2Status_posX,
+                     osd_params.Gps2Status_posY, 0, 0, TEXT_VA_TOP,
+                     osd_params.Gps2Status_align, 0,
+                     SIZE_TO_FONT[osd_params.Gps2Status_fontsize],
+                     color);
 }
 
 void draw_gps2_hdop() {
@@ -681,11 +694,11 @@ void draw_climb_rate() {
   }
 
   if (average_climb > 0.0f) {
-    write_vline_outlined(x, y - arrowLength, y + arrowLength, 2, 2, 0, 1);
+    write_vline_outlined(x, y - arrowLength, y + arrowLength, 2, 2, 0, 1, 1);
     write_line_outlined(x - 3, y - arrowLength + 3, x, y - arrowLength, 2, 2, 0, 1);
     write_line_outlined(x + 3, y - arrowLength + 3, x, y - arrowLength, 2, 2, 0, 1);
   } else if (average_climb < 0.0f) {
-    write_vline_outlined(x, y - arrowLength, y + arrowLength, 2, 2, 0, 1);
+    write_vline_outlined(x, y - arrowLength, y + arrowLength, 2, 2, 0, 1, 1);
     write_line_outlined(x - 3, y + arrowLength - 3, x, y + arrowLength, 2, 2, 0, 1);
     write_line_outlined(x + 3, y + arrowLength - 3, x, y + arrowLength, 2, 2, 0, 1);
   }
@@ -879,7 +892,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
       xs = ((long int)(r * width) / (long int)range) + x;
       // Draw it.
       if (style == 1) {
-        write_vline_outlined(xs, majtick_start, majtick_end, 2, 2, 0, 1);
+        write_vline_outlined(xs, majtick_start, majtick_end, 2, 2, 0, 1, 1);
         // Draw heading above this tick.
         // If it's not one of north, south, east, west, draw the heading.
         // Otherwise, draw one of the identifiers.
@@ -908,7 +921,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
         write_string(headingstr, xs + 1, majtick_start + textoffset, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_CENTER, 0, 2);
 
       } else if (style == 2) {
-        write_vline_outlined(xs, mintick_start, mintick_end, 2, 2, 0, 1);
+        write_vline_outlined(xs, mintick_start, mintick_end, 2, 2, 0, 1, 1);
       }
     }
 
@@ -996,7 +1009,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
 void draw_vertical_scale(float v, int range, int halign, int x, int y,
                          int height, int mintick_step, int majtick_step, int mintick_len,
                          int majtick_len, int boundtick_len, __attribute__((unused)) int max_val,
-                         int flags) {
+                         int flags, int min_val) {
   char temp[15];
   struct FontEntry font_info;
   struct FontDimensions dim;
@@ -1026,12 +1039,13 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
   int r = 0, rr = 0, rv = 0, ys = 0, style = 0;   // calc_ys = 0,
   // Iterate through each step.
   for (r = -range_2; r <= +range_2; r++) {
+    int color = 1;
     style = 0;
     rr    = r + range_2 - (int)v;     // normalise range for modulo, subtract value to move ticker tape
     rv    = -rr + range_2;     // for number display
-    if (flags & HUD_VSCALE_FLAG_NO_NEGATIVE) {
-      rr += majtick_step / 2;
-    }
+    /* if (flags & HUD_VSCALE_FLAG_NO_NEGATIVE) { */
+    /*   rr += majtick_step / 2; */
+    /* } */
     if (rr % majtick_step == 0) {
       style = 1;       // major tick
     } else if (rr % mintick_step == 0) {
@@ -1039,15 +1053,16 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
     } else {
       style = 0;
     }
-    if (flags & HUD_VSCALE_FLAG_NO_NEGATIVE && rv < 0) {
-      continue;
+    if (flags & HUD_VSCALE_FLAG_NO_NEGATIVE && rv <= min_val) {
+      color = 2;
     }
+
     if (style) {
       // Calculate y position.
       ys = ((long int)(r * height) / (long int)range) + y;
       // Depending on style, draw a minor or a major tick.
       if (style == 1) {
-        write_hline_outlined(majtick_start, majtick_end, ys, 2, 2, 0, 1);
+        write_hline_outlined(majtick_start, majtick_end, ys, 2, 2, 0, 1, color);
         memset(temp, ' ', 10);
         sprintf(temp, "%d", rv);
         text_length = (strlen(temp) + 1) * small_font_char_width;         // add 1 for margin
@@ -1055,18 +1070,25 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
           max_text_y = text_length;
         }
         if (halign == 0) {
-          write_string(temp, majtick_end + text_x_spacing + 1, ys, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0, 1);
+          write_color_string(temp, majtick_end + text_x_spacing + 1, ys, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0, 1, color);
         } else {
-          write_string(temp, majtick_end - text_x_spacing + 1, ys, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0, 1);
+          write_color_string(temp, majtick_end - text_x_spacing + 1, ys, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0, 1, color);
         }
       } else if (style == 2) {
-        write_hline_outlined(mintick_start, mintick_end, ys, 2, 2, 0, 1);
+        write_hline_outlined(mintick_start, mintick_end, ys, 2, 2, 0, 1, color);
       }
     }
   }
   // Generate the string for the value, as well as calculating its dimensions.
   memset(temp, ' ', 10);
   // my_itoa(v, temp);
+
+  int color = 1;
+
+  if (flags & HUD_VSCALE_FLAG_NO_NEGATIVE && v < (float)min_val) {
+      color = 2;
+  }
+
   if( v != 0.0f && fabsf(v) < 10.0f)
   {
       sprintf(temp, "%3.1f", v);
@@ -1088,8 +1110,8 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
   // Draw an arrow from the number to the point.
   for (i = 0; i < arrow_len; i++) {
     if (halign == 0) {
-      write_pixel_lm(xx - arrow_len + i, y - i - 1, 1, 1);
-      write_pixel_lm(xx - arrow_len + i, y + i - 1, 1, 1);
+      write_pixel_lm(xx - arrow_len + i, y - i - 1, 1, color);
+      write_pixel_lm(xx - arrow_len + i, y + i - 1, 1, color);
 #ifdef VERTICAL_SCALE_FILLED_NUMBER
       write_hline_lm(xx + dim.width - 1, xx - arrow_len + i + 1, y - i - 1, 0, 1);
       write_hline_lm(xx + dim.width - 1, xx - arrow_len + i + 1, y + i - 1, 0, 1);
@@ -1098,8 +1120,8 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
       write_hline_lm(xx + dim.width - 1, xx - arrow_len + i + 1, y + i - 1, 0, 0);
 #endif
     } else {
-      write_pixel_lm(xx + arrow_len - i, y - i - 1, 1, 1);
-      write_pixel_lm(xx + arrow_len - i, y + i - 1, 1, 1);
+      write_pixel_lm(xx + arrow_len - i, y - i - 1, 1, color);
+      write_pixel_lm(xx + arrow_len - i, y + i - 1, 1, color);
 #ifdef VERTICAL_SCALE_FILLED_NUMBER
       write_hline_lm(xx - dim.width - 1, xx + arrow_len - i - 1, y - i - 1, 0, 1);
       write_hline_lm(xx - dim.width - 1, xx + arrow_len - i - 1, y + i - 1, 0, 1);
@@ -1110,19 +1132,19 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
     }
   }
   if (halign == 0) {
-    write_hline_lm(xx, xx + dim.width - 1, y - arrow_len, 1, 1);
-    write_hline_lm(xx, xx + dim.width - 1, y + arrow_len - 2, 1, 1);
-    write_vline_lm(xx + dim.width - 1, y - arrow_len, y + arrow_len - 2, 1, 1);
+    write_hline_lm(xx, xx + dim.width - 1, y - arrow_len, color, 1);
+    write_hline_lm(xx, xx + dim.width - 1, y + arrow_len - 2, color, 1);
+    write_vline_lm(xx + dim.width - 1, y - arrow_len, y + arrow_len - 2, color, 1);
   } else {
-    write_hline_lm(xx, xx - dim.width - 1, y - arrow_len, 1, 1);
-    write_hline_lm(xx, xx - dim.width - 1, y + arrow_len - 2, 1, 1);
-    write_vline_lm(xx - dim.width - 1, y - arrow_len, y + arrow_len - 2, 1, 1);
+    write_hline_lm(xx, xx - dim.width - 1, y - arrow_len, color, 1);
+    write_hline_lm(xx, xx - dim.width - 1, y + arrow_len - 2, color, 1);
+    write_vline_lm(xx - dim.width - 1, y - arrow_len, y + arrow_len - 2, color, 1);
   }
   // Draw the text.
   if (halign == 0) {
-    write_string(temp, xx, y, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0, 0);
+    write_color_string(temp, xx, y, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0, 0, 1);
   } else {
-    write_string(temp, xx, y, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0, 0);
+    write_color_string(temp, xx, y, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0, 0, 1);
   }
 #ifdef VERTICAL_SCALE_BRUTE_FORCE_BLANK_OUT
   // This is a bad brute force method destuctive to other things that maybe drawn underneath like e.g. the artificial horizon:
@@ -1138,8 +1160,8 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
   }
 #endif
   y--;
-  write_hline_outlined(boundtick_start, boundtick_end, y + (height / 2), 2, 2, 0, 1);
-  write_hline_outlined(boundtick_start, boundtick_end, y - (height / 2), 2, 2, 0, 1);
+  write_hline_outlined(boundtick_start, boundtick_end, y + (height / 2), 2, 2, 0, 1, color);
+  write_hline_outlined(boundtick_start, boundtick_end, y - (height / 2), 2, 2, 0, 1, 1);
 }
 
 void draw_head_wp_home() {
@@ -1150,7 +1172,7 @@ void draw_head_wp_home() {
   posX = osd_params.CWH_Nmode_posX;
   posY = osd_params.CWH_Nmode_posY;
   r = osd_params.CWH_Nmode_radius;
-  write_circle_outlined(posX, posY, r, 0, 1, 0, 1);
+  write_circle_outlined(posX, posY, r, 0, 1, 0, 1, 1);
   write_string("N", posX, posY - r, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
 
   //draw heading
@@ -1366,7 +1388,7 @@ void draw_warning(void) {
       strcpy(warn_str, "");
   }
 
-  write_string(warn_str, osd_params.Alarm_posX, osd_params.Alarm_posY, 0, 0, TEXT_VA_TOP, osd_params.Alarm_align, 0, SIZE_TO_FONT[osd_params.Alarm_fontsize]);
+  write_color_string(warn_str, osd_params.Alarm_posX, osd_params.Alarm_posY, 0, 0, TEXT_VA_TOP, osd_params.Alarm_align, 0, SIZE_TO_FONT[osd_params.Alarm_fontsize], 2);
 }
 
 
@@ -1533,11 +1555,13 @@ void draw_battery_remaining() {
     return;
   }
 
+  int color = osd_battery_remaining_A < 20 ? 2 : 1;
   snprintf(tmp_str, sizeof(tmp_str), "%3d%%", osd_battery_remaining_A);
-  write_string(tmp_str, osd_params.BattRemaining_posX,
-               osd_params.BattRemaining_posY, 0, 0, TEXT_VA_TOP,
-               osd_params.BattRemaining_align, 0,
-               SIZE_TO_FONT[osd_params.BattRemaining_fontsize]);
+  write_color_string(tmp_str, osd_params.BattRemaining_posX,
+                     osd_params.BattRemaining_posY, 0, 0, TEXT_VA_TOP,
+                     osd_params.BattRemaining_align, 0,
+                     SIZE_TO_FONT[osd_params.BattRemaining_fontsize],
+                     color);
 }
 
 void draw_battery_consumed() {
@@ -1559,12 +1583,16 @@ void draw_wfb_state() {
     return;
   }
 
+  int color = 1;
+
   if (wfb_flags & WFB_LINK_LOST)
   {
+      color = 2;
       snprintf(tmp_str, sizeof(tmp_str), "WFB LOST");
   }
   else if (wfb_flags & WFB_LINK_JAMMED)
   {
+      color = 2;
       snprintf(tmp_str, sizeof(tmp_str), "WFB %d/JAM", wfb_rssi);
   }
   else
@@ -1572,11 +1600,12 @@ void draw_wfb_state() {
       snprintf(tmp_str, sizeof(tmp_str), "WFB %d/%d/%d", wfb_rssi, wfb_fec_fixed, wfb_errors);
   }
 
-  write_string(tmp_str,
-               osd_params.WFBState_posX,
-               osd_params.WFBState_posY, 0, 0, TEXT_VA_TOP,
-               osd_params.WFBState_align, 0,
-               SIZE_TO_FONT[osd_params.WFBState_fontsize]);
+  write_color_string(tmp_str,
+                     osd_params.WFBState_posX,
+                     osd_params.WFBState_posY, 0, 0, TEXT_VA_TOP,
+                     osd_params.WFBState_align, 0,
+                     SIZE_TO_FONT[osd_params.WFBState_fontsize],
+                     color);
 }
 
 
@@ -1602,15 +1631,18 @@ void draw_altitude_scale() {
       }
   }
 
+  // Set min alt 3m
   draw_vertical_scale(alt_shown * convert_distance, 40,
                       osd_params.Alt_Scale_align,
                       osd_params.Alt_Scale_posX,
                       osd_params.Alt_Scale_posY, 100,
 		      5, 10, 5, 8, 11,
-                      10000, 0);
+                      10000, HUD_VSCALE_FLAG_NO_NEGATIVE, 5);
+
   if ((osd_params.Alt_Scale_align == 1) && (posX > 15)) {
     posX -= 15;
   }
+
   write_string(tmp_str, posX,
                osd_params.Alt_Scale_posY - 70, 0, 0, TEXT_VA_TOP,
                osd_params.Alt_Scale_align, 0,
@@ -1671,22 +1703,26 @@ void draw_speed_scale() {
   }
 
   float spd_shown ;
+  int flags = 0;
 
   if (vtol_state == MAV_VTOL_STATE_TRANSITION_TO_FW || vtol_state == MAV_VTOL_STATE_FW || mav_type == MAV_TYPE_FIXED_WING)
   {
       spd_shown = osd_airspeed;
+      flags = HUD_VSCALE_FLAG_NO_NEGATIVE;
       snprintf(tmp_str, sizeof(tmp_str), "AS");
   } else {
       spd_shown = osd_groundspeed;
       snprintf(tmp_str, sizeof(tmp_str), "GS");
   }
 
+  // Set min airspeed 15 km/h
   draw_vertical_scale(spd_shown * convert_speed, 40,
                       osd_params.Speed_scale_align,
                       osd_params.Speed_scale_posX,
                       osd_params.Speed_scale_posY, 100,
 		      5, 10, 5, 8, 11,
-                      100, 0);
+                      100, flags, 15);
+
   write_string(tmp_str, osd_params.Speed_scale_posX,
                osd_params.Speed_scale_posY - 70, 0, 0, TEXT_VA_TOP,
                osd_params.Speed_scale_align, 0,

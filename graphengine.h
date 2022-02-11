@@ -10,8 +10,8 @@
 
 #define SETUP_STROKE_FILL(stroke, fill, mode)   \
     stroke = 0; fill = 0;                       \
-    if (mode == 0) { stroke = 0; fill = 1; }    \
-    if (mode == 1) { stroke = 1; fill = 0; }    \
+    if (mode == 0) { stroke = 0; fill = color; }    \
+    if (mode == 1) { stroke = color; fill = 0; }    \
 
 // Line endcaps (for horizontal and vertical lines.)
 #define ENDCAP_NONE  0
@@ -31,15 +31,15 @@
     { write_pixel_lm(x - 1, y, s, l); write_pixel_lm(x, y, s, l); write_pixel_lm(x + 1, y, s, l); }
 
 // Macros for writing pixels in a midpoint circle algorithm.
-#define CIRCLE_PLOT_8(cx, cy, x, y, lmode, mode)        \
-    CIRCLE_PLOT_4(cx, cy, x, y, mode, lmode);           \
-    if ((x) != (y)) { CIRCLE_PLOT_4(cx, cy, y, x, mode, lmode); }
+#define CIRCLE_PLOT_8(cx, cy, x, y, color, mode)        \
+    CIRCLE_PLOT_4(cx, cy, x, y, mode, color);           \
+    if ((x) != (y)) { CIRCLE_PLOT_4(cx, cy, y, x, mode, color); }
 
-#define CIRCLE_PLOT_4(cx, cy, x, y, lmode, mode)   \
-    write_pixel_lm((cx) + (x), (cy) + (y), mode, lmode); \
-    write_pixel_lm((cx) - (x), (cy) + (y), mode, lmode); \
-    write_pixel_lm((cx) + (x), (cy) - (y), mode, lmode); \
-    write_pixel_lm((cx) - (x), (cy) - (y), mode, lmode);
+#define CIRCLE_PLOT_4(cx, cy, x, y, color, mode)   \
+    write_pixel_lm((cx) + (x), (cy) + (y), mode, color); \
+    write_pixel_lm((cx) - (x), (cy) + (y), mode, color); \
+    write_pixel_lm((cx) + (x), (cy) - (y), mode, color); \
+    write_pixel_lm((cx) - (x), (cy) - (y), mode, color);
 
 
 // Font flags.
@@ -128,30 +128,32 @@ void displayGraphics(void);
 //void drawArrow(uint16_t x, uint16_t y, uint16_t angle, uint16_t size);
 void drawBox(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 
-void write_pixel_lm(int x, int y, int mmode, int lmode);
+void write_pixel_lm(int x, int y, int opaq, int color);
 
-void write_hline_lm(int x0, int x1, int y, int lmode, int mmode);
-void write_hline_outlined(int x0, int x1, int y, int endcap0, int endcap1, int mode, int mmode);
+void write_hline_lm(int x0, int x1, int y, int color, int opaq);
 
-void write_vline_lm(int x, int y0, int y1, int lmode, int mmode);
-void write_vline_outlined(int x, int y0, int y1, int endcap0, int endcap1, int mode, int mmode);
+void write_hline_outlined(int x0, int x1, int y, int endcap0, int endcap1, int mode, int opaq, int color);
 
-void write_filled_rectangle_lm(int x, int y, int width, int height, int lmode, int mmode);
-void write_rectangle_outlined(int x, int y, int width, int height, int mode, int mmode);
+void write_vline_lm(int x, int y0, int y1, int color, int opaq);
+void write_vline_outlined(int x, int y0, int y1, int endcap0, int endcap1, int mode, int opaq, int color);
 
-void write_circle_outlined(int cx, int cy, int r, int dashp, int bmode, int mode, int mmode);
+void write_filled_rectangle_lm(int x, int y, int width, int height, int color, int opaq);
+void write_rectangle_outlined(int x, int y, int width, int height, int mode, int opaq);
 
-void write_line_lm(int x0, int y0, int x1, int y1, int mmode, int lmode);
-void write_line_outlined(int x0, int y0, int x1, int y1, int endcap0, int endcap1, int mode, int mmode);
-void write_line_outlined_dashed(int x0, int y0, int x1, int y1, int endcap0, int endcap1, int mode, int mmode, int dots);
+void write_circle_outlined(int cx, int cy, int r, int dashp, int bmode, int mode, int opaq, int color);
+
+void write_line_lm(int x0, int y0, int x1, int y1, int opaq, int color);
+void write_line_outlined(int x0, int y0, int x1, int y1, int endcap0, int endcap1, int mode, int opaq);
+void write_line_outlined_dashed(int x0, int y0, int x1, int y1, int endcap0, int endcap1, int mode, int opaq, int dots);
 
 void write_triangle_filled(int x0, int y0, int x1, int y1, int x2, int y2);
 void write_triangle_wire(int x0, int y0, int x1, int y1, int x2, int y2);
 
-void write_char16(char ch, int x, int y, int font);
-void write_char(char ch, int x, int y, int flags, int font);
+void write_char16(char ch, int x, int y, int font, int color);
+void write_char(char ch, int x, int y, int flags, int font, int color);
 
 void write_string(char *str, int x, int y, int xs, int ys, int va, int ha, int flags, int font);
+void write_color_string(char *str, int x, int y, int xs, int ys, int va, int ha, int flags, int font, int color);
 
 int fetch_font_info(uint8_t ch, int font, struct FontEntry *font_info, char *lookup);
 void calc_text_dimensions(char *str, struct FontEntry font, int xs, int ys, struct FontDimensions *dim);
