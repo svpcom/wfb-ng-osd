@@ -149,7 +149,7 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
     printf("VIDEO_CODEC=%s\n", video_codec);
 
     asprintf(&pipeline_str,
-             "udpsrc port=%d caps=\"application/x-rtp, media=(string)video\" ! "
+             "udpsrc do-timestamp=true port=%d caps=\"application/x-rtp, media=(string)video\" ! "
              "rtp%sdepay ! "
              "avdec_%s ! "
              "vaapipostproc ! "
