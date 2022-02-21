@@ -139,6 +139,7 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
     char *pipeline_str;
     GstElement *pipeline;
     GstElement *cairo_overlay;
+    char *video_convert = "videoconvert";
 
     char *__rtp_port = getenv("RTP_PORT");
     char *video_codec = getenv("VIDEO_CODEC");
@@ -148,19 +149,30 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
     printf("RTP_PORT=%d\n", rtp_port);
     printf("VIDEO_CODEC=%s\n", video_codec);
 
+    GstElement * vaapipp = gst_element_factory_make ("vaapipostproc", "vaapipostproc");
+
+    if(vaapipp != NULL)
+    {
+      printf("Using vaapipostproc\n");
+      video_convert = "vaapipostproc";
+      gst_object_unref(vaapipp);
+    }
+
     asprintf(&pipeline_str,
              "udpsrc do-timestamp=true port=%d caps=\"application/x-rtp, media=(string)video\" ! "
              "rtp%sdepay ! "
              "avdec_%s ! "
-             "vaapipostproc ! "
+             "%s ! "
              "video/x-raw,width=1920 ! "
              "cairooverlay name=overlay ! "
-             "vaapipostproc ! "
+             "%s ! "
              "xvimagesink sync=false",
-             rtp_port, video_codec, video_codec);
+             rtp_port, video_codec, video_codec, video_convert, video_convert);
 
     pipeline = gst_parse_launch(pipeline_str, NULL);
     free(pipeline_str);
+
+    g_assert(pipeline);
 
     /* Hook up the necessary signals for cairooverlay */
     cairo_overlay = gst_bin_get_by_name(GST_BIN(pipeline), "overlay");
