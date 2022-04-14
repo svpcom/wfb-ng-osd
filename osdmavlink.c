@@ -215,7 +215,7 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
 
             case MAVLINK_MSG_ID_RADIO_STATUS:
             {
-                if ((msg.sysid != 3) || (msg.compid != 242)) {
+                if ((msg.sysid != 3) || (msg.compid != 68)) {
                     break;
                 }
 
