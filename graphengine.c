@@ -85,7 +85,7 @@ void displayGraphics(void) {
 
     // convert video buffer into image
     unsigned int dstride = GRAPHICS_WIDTH * 4;
-    VGImageFormat rgbaFormat = VG_sABGR_8888;
+    VGImageFormat rgbaFormat = VG_sARGB_8888;
 
     VGImage img = vgCreateImage(rgbaFormat, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, VG_IMAGE_QUALITY_NONANTIALIASED);
 
