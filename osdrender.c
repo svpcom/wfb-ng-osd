@@ -1593,11 +1593,16 @@ void draw_wfb_state() {
   else if (wfb_flags & WFB_LINK_JAMMED)
   {
       color = 2;
-      snprintf(tmp_str, sizeof(tmp_str), "WFB %d/JAM", wfb_rssi);
+      snprintf(tmp_str, sizeof(tmp_str), "WFB %3d JAMMED", wfb_rssi);
   }
   else
   {
-      snprintf(tmp_str, sizeof(tmp_str), "WFB %d/%d/%d", wfb_rssi, wfb_fec_fixed, wfb_errors);
+      if(wfb_errors > 0)
+      {
+        color = 2;
+      }
+
+      snprintf(tmp_str, sizeof(tmp_str), "WFB %3d F%d L%d", wfb_rssi, wfb_fec_fixed, wfb_errors);
   }
 
   write_color_string(tmp_str,
