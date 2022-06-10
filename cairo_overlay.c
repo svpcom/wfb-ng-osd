@@ -139,38 +139,63 @@ setup_gst_pipeline (CairoOverlayState * overlay_state)
     char *pipeline_str;
     GstElement *pipeline;
     GstElement *cairo_overlay;
-    char *video_convert = "videoconvert";
+    GError *error = NULL;
 
     char *__rtp_port = getenv("RTP_PORT");
     char *video_codec = getenv("VIDEO_CODEC");
+    char *__screen_width = getenv("SCREEN_WIDTH");
+
     int rtp_port = __rtp_port == NULL ? 5600 : atoi(__rtp_port);
     video_codec = video_codec == NULL ? "h264" : video_codec;
+    int screen_width = __screen_width == NULL ? 1920 : atoi(__screen_width);
+    int screen_height = screen_width * 9 / 16;
 
     printf("RTP_PORT=%d\n", rtp_port);
     printf("VIDEO_CODEC=%s\n", video_codec);
+    printf("SCREEN_WIDTH=%d\n", screen_width);
 
     GstElement * vaapipp = gst_element_factory_make ("vaapipostproc", "vaapipostproc");
 
     if(vaapipp != NULL)
     {
-      printf("Using vaapipostproc\n");
-      video_convert = "vaapipostproc";
-      gst_object_unref(vaapipp);
+        gst_object_unref(vaapipp);
+
+        asprintf(&pipeline_str,
+                 "udpsrc do-timestamp=true port=%d caps=\"application/x-rtp, media=(string)video\" ! "
+                 "rtp%sdepay ! "
+                 "avdec_%s ! "
+                 "vaapipostproc ! "
+                 "video/x-raw,width=%d,height=%d ! "
+                 "cairooverlay name=overlay ! "
+                 "vaapipostproc ! "
+                 "xvimagesink sync=false",
+                 rtp_port, video_codec, video_codec, screen_width, screen_height);
+    } else {
+        asprintf(&pipeline_str,
+                 "udpsrc do-timestamp=true port=%d caps=\"application/x-rtp, media=(string)video\" ! "
+                 "rtp%sdepay ! "
+                 "avdec_%s ! "
+                 "videoscale method=0 ! "
+                 "video/x-raw,width=%d,height=%d ! "
+                 "videoconvert ! "
+                 "cairooverlay name=overlay ! "
+                 "videoconvert ! "
+                 "xvimagesink sync=false",
+                 rtp_port, video_codec, video_codec, screen_width, screen_height);
+
     }
 
-    asprintf(&pipeline_str,
-             "udpsrc do-timestamp=true port=%d caps=\"application/x-rtp, media=(string)video\" ! "
-             "rtp%sdepay ! "
-             "avdec_%s ! "
-             "%s ! "
-             "video/x-raw,width=1920 ! "
-             "cairooverlay name=overlay ! "
-             "%s ! "
-             "xvimagesink sync=false",
-             rtp_port, video_codec, video_codec, video_convert, video_convert);
+    printf("GST pipeline: %s\n", pipeline_str);
 
-    pipeline = gst_parse_launch(pipeline_str, NULL);
+    pipeline = gst_parse_launch(pipeline_str, &error);
     free(pipeline_str);
+
+    if(error != NULL)
+    {
+        fprintf (stderr, "GST Error: %s\n", error->message);
+        g_error_free (error);
+        exit(1);
+    }
 
     g_assert(pipeline);
 
