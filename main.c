@@ -46,6 +46,10 @@
 #include "graphengine.h"
 
 
+#ifdef __GST_CAIRO__
+int gst_main(int rtp_port, char *codec, int rtp_jitter, int use_vaapi, int use_xv, int screen_width);
+#endif
+
 int open_udp_socket_for_rx(int port)
 {
     struct sockaddr_in saddr;
@@ -54,8 +58,6 @@ int open_udp_socket_for_rx(int port)
         perror("Error opening socket");
         exit(1);
     }
-
-    printf("OSD_PORT=%d\n", port);
 
     int optval = 1;
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
@@ -75,24 +77,80 @@ int open_udp_socket_for_rx(int port)
 
 int main(int argc, char **argv)
 {
+    int opt;
+    int osd_port = 14551;
+    int rtp_port = 5600;
+    char* codec = "h264";
+    int rtp_jitter = 5;
+    int use_vaapi = 0;
+    int use_xv = 0;
+    int screen_width = 1920;
+
     uint64_t render_ts = 0;
     uint64_t cur_ts = 0;
     uint8_t buf[65536]; // Max UDP packet size
     int fd;
     struct pollfd fds[1];
-    int shift_x = 0;
-    int shift_y = 0;
-    float scale_x = 1.0;
-    float scale_y = 1.0;
-    char *osd_port = getenv("OSD_PORT");
 
-    osd_init(shift_x, shift_y, scale_x, scale_y);
+    while ((opt = getopt(argc, argv, "hp:P:45j:vxw:")) != -1) {
+        switch (opt) {
+        case 'p':
+            osd_port = atoi(optarg);
+            break;
+
+        case 'P':
+            rtp_port = atoi(optarg);
+            break;
+
+        case '4':
+            codec = "h264";
+            break;
+
+        case '5':
+            codec = "h265";
+            break;
+
+        case 'j':
+            rtp_jitter = atoi(optarg);
+            break;
+
+        case 'v':
+            use_vaapi = 1;
+            break;
+
+        case 'x':
+            use_xv = 1;
+            break;
+
+        case 'w':
+            screen_width = atoi(optarg);
+            break;
+
+        case 'h':
+        default:
+        show_usage:
+            fprintf(stderr, "%s [-p mavlink_port] [-P rtp_port] [-4] [-5] [-j rtp_jitter] [-v] [-x] [-w screen_width] \n", argv[0]);
+            fprintf(stderr, "Default: mavlink_port=%d, rtp_port=%d, codec=%s, rtp_jitter=%d, use_vaapi=%d, use_xv=%d, screen_width=%d\n", osd_port, rtp_port, codec, rtp_jitter, use_vaapi, use_xv, screen_width);
+            fprintf(stderr, "WFB-ng OSD version " WFB_OSD_VERSION "\n");
+            fprintf(stderr, "WFB-ng home page: <http://wfb-ng.org>\n");
+            exit(1);
+        }
+    }
+
+    if (optind > argc) {
+        goto show_usage;
+    }
+
+    printf("Use: mavlink_port=%d, rtp_port=%d, codec=%s, rtp_jitter=%d, use_vaapi=%d, use_xv=%d, screen_width=%d\n", osd_port, rtp_port, codec, rtp_jitter, use_vaapi, use_xv, screen_width);
+
+    osd_init(0, 0, 1, 1);
 
 #ifdef __GST_CAIRO__
     void* gst_thread_start(void *arg)
     {
-        gst_main(argc, argv);
-        return NULL;
+        gst_main(rtp_port, codec, rtp_jitter, use_vaapi, use_xv, screen_width);
+        fprintf(stderr, "gst thread exited\n");
+        exit(1);
     }
 
     pthread_t tid;
@@ -100,7 +158,7 @@ int main(int argc, char **argv)
 #endif
 
     memset(fds, '\0', sizeof(fds));
-    fd = open_udp_socket_for_rx(osd_port == NULL ? 14551 : atoi(osd_port));
+    fd = open_udp_socket_for_rx(osd_port);
 
     if(fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK) < 0)
     {

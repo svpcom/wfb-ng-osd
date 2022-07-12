@@ -1,4 +1,13 @@
 mode?=gst
+ARCH ?= $(shell uname -i)
+PYTHON ?= /usr/bin/python3
+COMMIT ?= $(shell git rev-parse HEAD)
+VERSION ?= $(shell $(PYTHON) ./version.py $(shell git show -s --format="%ct" $(shell git rev-parse HEAD)) $(shell git rev-parse --abbrev-ref HEAD))
+SOURCE_DATE_EPOCH ?= $(shell git show -s --format="%ct" $(shell git rev-parse HEAD))
+
+export VERSION COMMIT SOURCE_DATE_EPOCH
+
+CFLAGS += -DWFB_OSD_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"'
 
 ifeq ($(mode), gst)
 CFLAGS += -Wall -pthread -std=gnu99 -D__GST_CAIRO__ -fPIC $(shell pkg-config --cflags cairo) $(shell pkg-config --cflags glib-2.0) $(shell pkg-config --cflags gstreamer-1.0)
