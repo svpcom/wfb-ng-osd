@@ -17,7 +17,7 @@
 #include <time.h>
 
 #include "graphengine.h"
-#include "mavlink/common/mavlink.h"
+#include "mavlink/ardupilotmega/mavlink.h"
 
 void osd_init(int shift_x, int shift_y, float scale_x, float scale_y);
 void render();

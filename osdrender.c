@@ -1425,6 +1425,118 @@ VERTEX2DF gps_to_screen_pixel(float lat, float lon, float cent_lat, float cent_l
   return point_ret;
 }
 
+char *ardupilot_modes_copter(int mode)
+{
+    switch(mode)
+    {
+    case COPTER_MODE_STABILIZE:
+        return "STABILIZE";
+    case COPTER_MODE_ACRO:
+        return "ACRO";
+    case COPTER_MODE_ALT_HOLD:
+        return "ALT";
+    case COPTER_MODE_AUTO:
+        return "AUTO";
+    case COPTER_MODE_GUIDED:
+        return "GUIDED";
+    case COPTER_MODE_LOITER:
+        return "LOITER";
+    case COPTER_MODE_RTL:
+        return "RTL";
+    case COPTER_MODE_CIRCLE:
+        return "CIRCLE";
+    case COPTER_MODE_LAND:
+        return "LAND";
+    case COPTER_MODE_DRIFT:
+        return "DRIFT";
+    case COPTER_MODE_SPORT:
+        return "SPORT";
+    case COPTER_MODE_FLIP:
+        return "FLIP";
+    case COPTER_MODE_AUTOTUNE:
+        return "AUTOTUNE";
+    case COPTER_MODE_POSHOLD:
+        return "POSHOLD";
+    case COPTER_MODE_BRAKE:
+        return "BRAKE";
+    case COPTER_MODE_THROW:
+        return "THROW";
+    case COPTER_MODE_AVOID_ADSB:
+        return "AVOID";
+    case COPTER_MODE_GUIDED_NOGPS:
+        return "GUIDED";
+    case COPTER_MODE_SMART_RTL:
+        return "SMART";
+    case COPTER_MODE_FLOWHOLD:
+        return "FLOWHOLD";
+    case COPTER_MODE_FOLLOW:
+        return "FOLLOW";
+    case COPTER_MODE_ZIGZAG:
+        return "ZIGZAG";
+    case COPTER_MODE_SYSTEMID:
+        return "SYSTEMID";
+    case COPTER_MODE_AUTOROTATE:
+        return "AUTOROTATE";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+char *ardupilot_modes_plane(int mode)
+{
+    switch(mode)
+    {
+    case PLANE_MODE_MANUAL:
+        return "MANUAL";
+    case PLANE_MODE_CIRCLE:
+        return "CIRCLE";
+    case PLANE_MODE_STABILIZE:
+        return "STABILIZE";
+    case PLANE_MODE_TRAINING:
+        return "TRAINING";
+    case PLANE_MODE_ACRO:
+        return "ACRO";
+    case PLANE_MODE_FLY_BY_WIRE_A:
+        return "FLY";
+    case PLANE_MODE_FLY_BY_WIRE_B:
+        return "FLY";
+    case PLANE_MODE_CRUISE:
+        return "CRUISE";
+    case PLANE_MODE_AUTOTUNE:
+        return "AUTOTUNE";
+    case PLANE_MODE_AUTO:
+        return "AUTO";
+    case PLANE_MODE_RTL:
+        return "RTL";
+    case PLANE_MODE_LOITER:
+        return "LOITER";
+    case PLANE_MODE_TAKEOFF:
+        return "TAKEOFF";
+    case PLANE_MODE_AVOID_ADSB:
+        return "AVOID";
+    case PLANE_MODE_GUIDED:
+        return "GUIDED";
+    case PLANE_MODE_INITIALIZING:
+        return "INITIALIZING";
+    case PLANE_MODE_QSTABILIZE:
+        return "QSTABILIZE";
+    case PLANE_MODE_QHOVER:
+        return "QHOVER";
+    case PLANE_MODE_QLOITER:
+        return "QLOITER";
+    case PLANE_MODE_QLAND:
+        return "QLAND";
+    case PLANE_MODE_QRTL:
+        return "QRTL";
+    case PLANE_MODE_QAUTOTUNE:
+        return "QAUTOTUNE";
+    case PLANE_MODE_QACRO:
+        return "QACRO";
+    default:
+        return "UNKNOWN";
+    }
+}
+
 void draw_flight_mode() {
   if (!enabledAndShownOnPanel(osd_params.FlightMode_en,
                               osd_params.FlightMode_panel)) {
@@ -1432,77 +1544,84 @@ void draw_flight_mode() {
   }
 
   char* mode_str = "UNKNOWN";
-  switch (autopilot) {
-  case 3:       //ardupilotmega
+
+  switch (autopilot)
   {
-    if (mav_type != 1) {
-      if (custom_mode == 0)       mode_str = "STAB";              //manual airframe angle with manual throttle
-      else if (custom_mode == 1)  mode_str = "ACRO";              //manual body-frame angular rate with manual throttle
-      else if (custom_mode == 2)  mode_str = "ALTH";              //manual airframe angle with automatic throttle
-      else if (custom_mode == 3)  mode_str = "AUTO";              //fully automatic waypoint control using mission commands
-      else if (custom_mode == 4)  mode_str = "GUID";              //fully automatic fly to coordinate or fly at velocity/direction using GCS immediate commands
-      else if (custom_mode == 5)  mode_str = "LOIT";              //automatic horizontal acceleration with automatic throttle
-      else if (custom_mode == 6)  mode_str = "RETL";              //automatic return to launching point
-      else if (custom_mode == 7)  mode_str = "CIRC";              //automatic circular flight with automatic throttle
-      //else if (custom_mode == 8)  mode_str = "POSI"; //Position: auto control
-      else if (custom_mode == 9)  mode_str = "LAND";              //automatic landing with horizontal position control
-      else if (custom_mode == 10) mode_str = "OFLO";              //deprecated
-      else if (custom_mode == 11) mode_str = "DRIF";              //semi-automous position, yaw and throttle control
-      else if (custom_mode == 13) mode_str = "SPRT";              //manual earth-frame angular rate control with manual throttle
-      else if (custom_mode == 14) mode_str = "FLIP";              //automatically flip the vehicle on the roll axis
-      else if (custom_mode == 15) mode_str = "ATUN";              //automatically tune the vehicle's roll and pitch gains
-      else if (custom_mode == 16) mode_str = "POSH";              //automatic position hold with manual override, with automatic throttle
-      else if (custom_mode == 17) mode_str = "BRAK";              //full-brake using inertial/GPS system, no pilot input
-    } else if (mav_type == 1) {          //ArduPlane
-      if (custom_mode == 0)       mode_str = "MANU";              //Manual
-      else if (custom_mode == 1)  mode_str = "CIRC";              //Circle
-      else if (custom_mode == 2)  mode_str = "STAB";              //Stabilize
-      else if (custom_mode == 3)  mode_str = "TRNG";              //Training
-      else if (custom_mode == 4)  mode_str = "ACRO";              //Acro
-      else if (custom_mode == 5)  mode_str = "FBWA";              //Fly_By_Wire_A
-      else if (custom_mode == 6)  mode_str = "FBWB";              //Fly_By_Wire_B
-      else if (custom_mode == 7)  mode_str = "CRUI";              //Cruise
-      else if (custom_mode == 8)  mode_str = "ATUN";              //Auto Tune
-      else if (custom_mode == 10) mode_str = "AUTO";              //Auto
-      else if (custom_mode == 11) mode_str = "RETL";              //Return to Launch
-      else if (custom_mode == 12) mode_str = "LOIT";              //Loiter
-      else if (custom_mode == 15) mode_str = "GUID";              //Guided
-      else if (custom_mode == 16) mode_str = "INIT";              //Initializing
-    }
+  case MAV_AUTOPILOT_ARDUPILOTMEGA:       //ardupilotmega
+      {
+          if (mav_type == MAV_TYPE_FIXED_WING)
+              mode_str = ardupilot_modes_plane(custom_mode);
+          else
+              mode_str = ardupilot_modes_copter(custom_mode);
+      }
+      break;
 
-    break;
-  }
-  case 12:       //PX4
-  {
-    union px4_custom_mode custom_mode_px4;
-    custom_mode_px4.data = custom_mode;
+  case MAV_AUTOPILOT_PX4:
+      {
+          union px4_custom_mode custom_mode_px4;
+          custom_mode_px4.data = custom_mode;
 
-    if (custom_mode_px4.main_mode == 1) mode_str = "MANUAL";
-    else if (custom_mode_px4.main_mode == 2) mode_str = "ALTCTL";
-    else if (custom_mode_px4.main_mode == 3) mode_str = "POSCTL";
-    else if (custom_mode_px4.main_mode == 4)
-    {
-      if (custom_mode_px4.sub_mode == 1)  mode_str = "READY";
-      else if (custom_mode_px4.sub_mode == 2)  mode_str = "TAKEOFF";
-      else if (custom_mode_px4.sub_mode == 3)  mode_str = "LOITER";
-      else if (custom_mode_px4.sub_mode == 4)  mode_str = "MISSION";
-      else if (custom_mode_px4.sub_mode == 5)  mode_str = "RTL";
-      else if (custom_mode_px4.sub_mode == 6)  mode_str = "LAND";
-      else if (custom_mode_px4.sub_mode == 7)  mode_str = "RTGS";
-      else if (custom_mode_px4.sub_mode == 8)  mode_str = "FOLLOW";
-    }
-    else if (custom_mode_px4.main_mode == 5) mode_str = "ACRO";
-    else if (custom_mode_px4.main_mode == 6) mode_str = "OFFBOARD";
-    else if (custom_mode_px4.main_mode == 7) mode_str = "STABILIZE";
-    else if (custom_mode_px4.main_mode == 8) mode_str = "RATTITUDE";
-
-    break;
-  }
+          switch(custom_mode_px4.main_mode)
+          {
+          case 1:
+              mode_str = "MANUAL";
+              break;
+          case 2:
+              mode_str = "ALTCTL";
+              break;
+          case 3:
+              mode_str = "POSCTL";
+              break;
+          case 4:
+              {
+                  switch(custom_mode_px4.sub_mode)
+                  {
+                  case 1:
+                      mode_str = "READY";
+                      break;
+                  case 2:
+                      mode_str = "TAKEOFF";
+                      break;
+                  case 3:
+                      mode_str = "LOITER";
+                      break;
+                  case 4:
+                      mode_str = "MISSION";
+                      break;
+                  case 5:
+                      mode_str = "RTL";
+                      break;
+                  case 6:
+                      mode_str = "LAND";
+                      break;
+                  case 7:
+                      mode_str = "RTGS";
+                      break;
+                  case 8:
+                      mode_str = "FOLLOW";
+                      break;
+                  }
+              }
+              break;
+          case 5:
+              mode_str = "ACRO";
+              break;
+          case 6:
+              mode_str = "OFFBOARD";
+              break;
+          case 7:
+              mode_str = "STABILIZE";
+              break;
+          case 8:
+              mode_str = "RATTITUDE";
+              break;
+          }
+      }
+      break;
 
   default:
-  {
-    mode_str = "----";
-  }
+      mode_str = "----";
+      break;
   }
 
   write_string(mode_str, osd_params.FlightMode_posX, osd_params.FlightMode_posY,

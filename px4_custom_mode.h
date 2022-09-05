@@ -70,9 +70,9 @@ union px4_custom_mode {
     uint16_t reserved;
     uint8_t main_mode;
     uint8_t sub_mode;
-  };
+  }__attribute__((packed));
   uint32_t data;
   float data_float;
-};
+}__attribute__((packed));
 
 #endif /* PX4_CUSTOM_MODE_H_ */

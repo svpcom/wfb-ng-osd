@@ -51,7 +51,7 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 }
 
                 mavtype = mavlink_msg_heartbeat_get_type(&msg);
-                if (mavtype == 6) {
+                if (mavtype == MAV_TYPE_GCS) {
                     // MAVMSG from GCS
                     break;
                 }
@@ -64,7 +64,7 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 custom_mode = mavlink_msg_heartbeat_get_custom_mode(&msg);
 
                 last_motor_armed = motor_armed;
-                motor_armed = base_mode & (1 << 7);
+                motor_armed = base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
 
                 if (!last_motor_armed && motor_armed) {
                     armed_start_time = GetSystimeMS();
@@ -136,6 +136,16 @@ void parse_mavlink_packet(uint8_t *buf, int buflen)
                 osd_throttle = mavlink_msg_vfr_hud_get_throttle(&msg);
                 osd_alt = mavlink_msg_vfr_hud_get_alt(&msg);
                 osd_climb = mavlink_msg_vfr_hud_get_climb(&msg);
+            }
+            break;
+
+            // Workaround for ardupilot
+            case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+            {
+                mavlink_global_position_int_t global_position;
+                mavlink_msg_global_position_int_decode(&msg, &global_position);
+                osd_alt = global_position.alt / 1000.0;
+                osd_rel_alt = global_position.relative_alt / 1000.0;
             }
             break;
 
