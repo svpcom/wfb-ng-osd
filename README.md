@@ -16,7 +16,7 @@ Building:
 ---------
 
 1. Build for Linux X11 (native build):
-  * `apt-get install libcairo2-dev gstreamer1.0-tools libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly`
+  * `apt-get install libcairo2-dev gstreamer1.0-tools libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly libgstreamer-plugins-base1.0-dev`
   * `make osd`
 
 2. Build for Raspberry PI (cross-build):
