@@ -134,9 +134,13 @@ draw_overlay (GstElement * overlay, cairo_t * cr, guint64 timestamp,
 }
 
 static GstElement *
-setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec, int rtp_jitter, int use_vaapi, int use_xv, int screen_width)
+setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec, int rtp_jitter,
+                    int use_vaapi, int use_xv, int screen_width, char *rtsp_url)
 {
     char *pipeline_str;
+    char *src_str;
+    char *scale_str;
+    char *convert_str;
     GstElement *pipeline;
     GstElement *cairo_overlay;
     GError *error = NULL;
@@ -154,35 +158,43 @@ setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec
         }
     }
 
-    if(use_vaapi)
+    if(rtsp_url != NULL)
     {
-        asprintf(&pipeline_str,
-                 "udpsrc do-timestamp=true port=%d caps=\"application/x-rtp, media=(string)video\" ! "
-                 "rtpjitterbuffer latency=%d ! "
-                 "rtp%sdepay ! "
-                 "avdec_%s ! "
-                 "vaapipostproc ! "
-                 "video/x-raw,width=%d,height=%d ! "
-                 "cairooverlay name=overlay ! "
-                 "vaapipostproc ! "
-                 "%s sync=false",
-                 rtp_port, rtp_jitter, codec, codec, screen_width, screen_height, use_xv ? "xvimagesink" : "autovideosink");
+        asprintf(&src_str,
+                 "rtspsrc latency=%d location=\"%s\"", rtp_jitter, rtsp_url);
     } else {
-        asprintf(&pipeline_str,
-                 "udpsrc do-timestamp=true port=%d caps=\"application/x-rtp, media=(string)video\" ! "
-                 "rtpjitterbuffer latency=%d ! "
-                 "rtp%sdepay ! "
-                 "avdec_%s ! "
-                 "videoscale method=0 ! "
-                 "video/x-raw,width=%d,height=%d ! "
-                 "videoconvert ! "
-                 "cairooverlay name=overlay ! "
-                 "videoconvert ! "
-                 "%s sync=false",
-                 rtp_port, rtp_jitter, codec, codec, screen_width, screen_height, use_xv ? "xvimagesink" : "autovideosink");
-
+        asprintf(&src_str,
+                 "udpsrc port=%d caps=\"application/x-rtp,media=(string)video,  clock-rate=(int)90000, encoding-name=(string)H%s\" ! "
+                 "rtpjitterbuffer latency=%d",
+                 rtp_port, codec + 1, rtp_jitter);
     }
 
+    if(use_vaapi)
+    {
+        scale_str = "vaapipostproc";
+        convert_str = "vaapipostproc";
+    } else {
+        scale_str = "videoscale method=0";
+        convert_str = "videoconvert";
+    }
+
+    asprintf(&pipeline_str,
+             "%s ! "
+             "rtp%sdepay ! "
+             "%sparse config-interval=1 disable-passthrough=true ! "
+             "avdec_%s ! "
+             "%s ! "
+             "video/x-raw,width=%d,height=%d ! "
+             "%s ! "
+             "cairooverlay name=overlay ! "
+             "%s ! "
+             "%s sync=false",
+             src_str, codec, codec, codec, scale_str,
+             screen_width, screen_height,
+             convert_str, convert_str,
+             use_xv ? "xvimagesink" : "autovideosink");
+
+    free(src_str);
     printf("GST pipeline: %s\n", pipeline_str);
 
     pipeline = gst_parse_launch(pipeline_str, &error);
@@ -208,7 +220,7 @@ setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec
     return pipeline;
 }
 
-int gst_main(int rtp_port, char *codec, int rtp_jitter, int use_vaapi, int use_xv, int screen_width)
+int gst_main(int rtp_port, char *codec, int rtp_jitter, int use_vaapi, int use_xv, int screen_width, char *rtsp_src)
 {
     GMainLoop *loop;
     GstElement *pipeline;
@@ -221,7 +233,7 @@ int gst_main(int rtp_port, char *codec, int rtp_jitter, int use_vaapi, int use_x
     /* allocate on heap for pedagogical reasons, makes code easier to transfer */
     overlay_state = g_new0 (CairoOverlayState, 1);
 
-    pipeline = setup_gst_pipeline (overlay_state, rtp_port, codec, rtp_jitter, use_vaapi, use_xv, screen_width);
+    pipeline = setup_gst_pipeline (overlay_state, rtp_port, codec, rtp_jitter, use_vaapi, use_xv, screen_width, rtsp_src);
 
     bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
     gst_bus_add_signal_watch (bus);
