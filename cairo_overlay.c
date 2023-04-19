@@ -188,7 +188,9 @@ setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec
              "%s ! "
              "cairooverlay name=overlay ! "
              "%s ! "
-             "%s sync=false",
+             /* "tee name=t ! queue ! " */
+             "%s sync=false ",
+             /* "t. ! queue !  vaapih264enc rate-control=4 tune=1 cabac=1 dct8x8=1 mbbrc=1 ! matroskamux ! filesink location=/tmp/test.mkv" , */
              src_str, codec, codec, codec, scale_str,
              screen_width, screen_height,
              convert_str, convert_str,

@@ -33,11 +33,11 @@ POLYGON2D home_direction_outline;
 
 void simple_attitude_init(void) {
   simple_attitude.state     = 1;
-  simple_attitude.num_verts = 16;
+  simple_attitude.num_verts = 4;
   simple_attitude.x0        = osd_params.Atti_mp_posX;
   simple_attitude.y0        = osd_params.Atti_mp_posY;
-  const int line_length = 10;
-  const int line_spacing = 10;
+  const int line_length = 60;
+  const int line_spacing = 20;
   int x = 0;
   int i = 0;
   for (int index = 0; index < simple_attitude.num_verts; index += 4) {

@@ -203,7 +203,7 @@ void draw_osd_messages()
         if(item->message[0])
         {
             snprintf(tmp_str, sizeof(tmp_str), "%s", item->message);
-            write_string(tmp_str, x, y + 11 * i, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
+            write_string(tmp_str, x, y + 12 * i, 0, 0, TEXT_VA_TOP, TEXT_HA_LEFT, 0, SIZE_TO_FONT[0]);
             i += 1;
         }
         p = (p + 1) % OSD_MAX_MESSAGES;
@@ -218,9 +218,9 @@ void draw_simple_attitude() {
   int x = simple_attitude.x0;
   int y = simple_attitude.y0;
 
-  write_line_outlined(x - radius - 1, y, x - 2 * radius - 1, y, 0, 0, 0, 1);
-  write_line_outlined(x + radius - 1, y, x + 2 * radius + 1, y, 0, 0, 0, 1);
-  write_line_outlined(x, y - radius - 1, x, y - 2 * radius, 0, 0, 0, 1);
+  write_line_outlined(x - radius - 1, y, x - 3 * radius - 1, y, 0, 0, 0, 1);
+  write_line_outlined(x + radius - 1, y, x + 3 * radius + 1, y, 0, 0, 0, 1);
+  write_line_outlined(x, y - radius - 1, x, y - 3 * radius, 0, 0, 0, 1);
   write_circle_outlined(x, y, radius, 0, 1, 0, 1, 1);
 
   Transform_Polygon2D(&simple_attitude, -osd_roll, 0, osd_pitch);
@@ -232,15 +232,15 @@ void draw_simple_attitude() {
   }
 
   //draw pitch value
-  y = simple_attitude.y0 + 15;
+  y = simple_attitude.y0 - 20;
   snprintf(tmp_str, sizeof(tmp_str), "PT %d", (int)osd_pitch);
-  write_string(tmp_str, x, y + 5, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
+  write_string(tmp_str, x, y - 3, 0, 0, TEXT_VA_BOTTOM, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
 
   //draw roll value
-  y = simple_attitude.y0 - 20;
+  y = simple_attitude.y0 + 15;
 
   snprintf(tmp_str, sizeof(tmp_str), "RL %d", (int)osd_roll);
-  write_string(tmp_str, x, y - 3, 0, 0, TEXT_VA_BOTTOM, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
+  write_string(tmp_str, x, y + 5, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
 
 }
 
@@ -339,9 +339,9 @@ void draw_uav2d() {
   }
 
   if (osd_params.Atti_mp_type == 0) {
-    draw_radar();
+      draw_radar();
   } else {
-    draw_simple_attitude();
+      draw_simple_attitude();
   }
 }
 
@@ -356,16 +356,11 @@ void draw_throttle(void) {
   posX = osd_params.Throt_posX;
   posY = osd_params.Throt_posY;
 
-  pos_th_y = (int16_t)(0.5 * osd_throttle);
-  pos_th_x = posX - 25 + pos_th_y;
-  snprintf(tmp_str, sizeof(tmp_str), "%d%%", (int32_t)osd_throttle);
-  write_string(tmp_str, posX, posY, 0, 0, TEXT_VA_TOP, TEXT_HA_RIGHT, 0, SIZE_TO_FONT[0]);
-
   if (osd_params.Throt_scale_en) {
     pos_th_y = (int16_t)(0.5 * osd_throttle);
     pos_th_x = posX - 25 + pos_th_y;
-    snprintf(tmp_str, sizeof(tmp_str), "%d%%", (int32_t)osd_throttle);
-    write_string(tmp_str, posX, posY, 0, 0, TEXT_VA_TOP, TEXT_HA_RIGHT, 0, SIZE_TO_FONT[0]);
+    snprintf(tmp_str, sizeof(tmp_str), "THR%3d%%", (int32_t)osd_throttle);
+    write_string(tmp_str, posX, posY - 3, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
     if (osd_params.Throttle_Scale_Type == 0) {
       write_filled_rectangle_lm(posX + 3, posY + 25 - pos_th_y, 5, pos_th_y, 1, 1);
       write_hline_lm(posX + 3, posX + 7, posY - 25, 1, 1);
@@ -374,11 +369,12 @@ void draw_throttle(void) {
       write_vline_lm(posX + 7, posY - 25, posY + 25 - pos_th_y, 1, 1);
     }
     else if (osd_params.Throttle_Scale_Type == 1) {
-      write_filled_rectangle_lm(posX - 25, posY + 10, pos_th_y, 5, 1, 1);
-      write_hline_lm(pos_th_x, posX + 25, posY + 10, 1, 1);
-      write_hline_lm(pos_th_x, posX + 25, posY + 14, 1, 1);
-      write_vline_lm(posX + 25, posY + 10, posY + 14, 1, 1);
-      write_vline_lm(posX - 25, posY + 10, posY + 14, 1, 1);
+        write_rectangle_outlined(posX - 25, posY + 10, 50, 5, 0, 1);
+        write_filled_rectangle_lm(posX - 25, posY + 10, pos_th_y, 5, 1, 1);
+      /* write_hline_lm(pos_th_x, posX + 25, posY + 10, 1, 1); */
+      /* write_hline_lm(pos_th_x, posX + 25, posY + 15, 1, 1); */
+      /* write_vline_lm(posX + 25, posY + 10, posY + 15, 1, 1); */
+      /* write_vline_lm(posX - 25, posY + 10, posY + 15, 1, 1); */
     }
   } else {
     pos_th_y = (int16_t)(0.5 * osd_throttle);
@@ -659,33 +655,33 @@ void draw_climb_rate() {
     return;
   }
 
-  float average_climb = 0.0f;
-  osd_climb_ma[osd_climb_ma_index] = osd_climb;
-  osd_climb_ma_index = (osd_climb_ma_index + 1) % 10;
+  float average_climb = roundf(10.0f * osd_climb) / 10.0f;
+  /* osd_climb_ma[osd_climb_ma_index] = osd_climb; */
+  /* osd_climb_ma_index = (osd_climb_ma_index + 1) % 10; */
 
-  for (int i = 0; i < 10; i++) {
-    average_climb = average_climb + osd_climb_ma[i];
-  }
+  /* for (int i = 0; i < 10; i++) { */
+  /*   average_climb = average_climb + osd_climb_ma[i]; */
+  /* } */
 
-  average_climb = roundf(10 * (average_climb / 10)) / 10.0f;
+  /* average_climb = roundf(10 * (average_climb / 10)) / 10.0f; */
 
   int x = osd_params.ClimbRate_posX;
   int y = osd_params.ClimbRate_posY;
 
-  if(average_climb == 0.0f)
+  if(fabs(average_climb) < 0.1f)
   {
      return;
   }
   else if(fabs(average_climb) < 10.0f)
   {
-      snprintf(tmp_str, sizeof(tmp_str), "%.1f", fabs(average_climb));
+      snprintf(tmp_str, sizeof(tmp_str), "%2.1f m/s", fabs(average_climb));
   }
   else
   {
-      snprintf(tmp_str, sizeof(tmp_str), "%.0f", fabs(average_climb));
+      snprintf(tmp_str, sizeof(tmp_str), "%2.0f m/s", fabs(average_climb));
   }
 
-  write_string(tmp_str, x - 5, y, 0, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0,
+  write_string(tmp_str, x + 8, y, 0, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0,
                SIZE_TO_FONT[osd_params.ClimbRate_fontsize]);
 
   int arrowLength = 6;
@@ -1029,7 +1025,7 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
     boundtick_end   = x - boundtick_len;
   }
   // Retrieve width of large font (font #0); from this calculate the x spacing.
-  fetch_font_info(0, 0, &font_info, NULL);
+  fetch_font_info(0, 3, &font_info, NULL);
   int arrow_len      = (font_info.height / 2) + 1;
   int text_x_spacing = (font_info.width / 2);
   int max_text_y     = 0, text_length = 0;
@@ -1037,6 +1033,9 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
   // For -(range / 2) to +(range / 2), draw the scale.
   int range_2 = range / 2;   // , height_2 = height / 2;
   int r = 0, rr = 0, rv = 0, ys = 0, style = 0;   // calc_ys = 0,
+
+  write_vline_outlined(x, y + height/2, y - height/2, 1, 1, 0, 1, 1);
+
   // Iterate through each step.
   for (r = -range_2; r <= +range_2; r++) {
     int color = 1;
@@ -1053,8 +1052,12 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
     } else {
       style = 0;
     }
-    if (flags & HUD_VSCALE_FLAG_NO_NEGATIVE && rv <= min_val) {
-      color = 2;
+    if (flags & HUD_VSCALE_FLAG_NO_NEGATIVE)
+    {
+        if(rv < 0) continue;
+        if(rv <= min_val) {
+            color = 2;
+        }
     }
 
     if (style) {
@@ -1062,7 +1065,7 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
       ys = ((long int)(r * height) / (long int)range) + y;
       // Depending on style, draw a minor or a major tick.
       if (style == 1) {
-        write_hline_outlined(majtick_start, majtick_end, ys, 2, 2, 0, 1, color);
+        write_hline_outlined(majtick_start, majtick_end, ys, 0, 0, 0, 1, color);
         memset(temp, ' ', 10);
         sprintf(temp, "%d", rv);
         text_length = (strlen(temp) + 1) * small_font_char_width;         // add 1 for margin
@@ -1070,12 +1073,12 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
           max_text_y = text_length;
         }
         if (halign == 0) {
-          write_color_string(temp, majtick_end + text_x_spacing + 1, ys, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0, 1, color);
+          write_color_string(temp, majtick_end + text_x_spacing + 1, ys, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0, 2, color);
         } else {
-          write_color_string(temp, majtick_end - text_x_spacing + 1, ys, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0, 1, color);
+          write_color_string(temp, majtick_end - text_x_spacing + 1, ys, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0, 2, color);
         }
       } else if (style == 2) {
-        write_hline_outlined(mintick_start, mintick_end, ys, 2, 2, 0, 1, color);
+        write_hline_outlined(mintick_start, mintick_end, ys, 0, 0, 0, 1, color);
       }
     }
   }
@@ -1142,9 +1145,9 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
   }
   // Draw the text.
   if (halign == 0) {
-    write_color_string(temp, xx, y, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0, 0, 1);
+    write_color_string(temp, xx, y - 4, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_LEFT, 0, 3, 1);
   } else {
-    write_color_string(temp, xx, y, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0, 0, 1);
+    write_color_string(temp, xx, y - 4, 1, 0, TEXT_VA_MIDDLE, TEXT_HA_RIGHT, 0, 3, 1);
   }
 #ifdef VERTICAL_SCALE_BRUTE_FORCE_BLANK_OUT
   // This is a bad brute force method destuctive to other things that maybe drawn underneath like e.g. the artificial horizon:
@@ -1160,8 +1163,9 @@ void draw_vertical_scale(float v, int range, int halign, int x, int y,
   }
 #endif
   y--;
-  write_hline_outlined(boundtick_start, boundtick_end, y + (height / 2), 2, 2, 0, 1, color);
-  write_hline_outlined(boundtick_start, boundtick_end, y - (height / 2), 2, 2, 0, 1, 1);
+
+  write_hline_outlined(boundtick_start, boundtick_end, y + (height / 2), 0, 0, 0, 1, 1);
+  write_hline_outlined(boundtick_start, boundtick_end, y - (height / 2), 0, 0, 0, 1, 1);
 }
 
 void draw_head_wp_home() {
@@ -1173,7 +1177,7 @@ void draw_head_wp_home() {
   posY = osd_params.CWH_Nmode_posY;
   r = osd_params.CWH_Nmode_radius;
   write_circle_outlined(posX, posY, r, 0, 1, 0, 1, 1);
-  write_string("N", posX, posY - r, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
+  write_string("N", posX, posY - r + 2, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[0]);
 
   //draw heading
   POLYGON2D suav;
@@ -1636,10 +1640,11 @@ void draw_arm_state() {
   }
 
   char* tmp_str1 = motor_armed ? "ARMED" : "DISARMED";
-  write_string(tmp_str1, osd_params.Arm_posX,
-               osd_params.Arm_posY, 0, 0, TEXT_VA_TOP,
-               osd_params.Arm_align, 0,
-               SIZE_TO_FONT[osd_params.Arm_fontsize]);
+  write_color_string(tmp_str1, osd_params.Arm_posX,
+                     osd_params.Arm_posY, 0, 0, TEXT_VA_TOP,
+                     osd_params.Arm_align, 0,
+                     SIZE_TO_FONT[osd_params.Arm_fontsize],
+                     motor_armed ? 1 : 2);
 }
 
 void draw_battery_voltage() {
@@ -1741,6 +1746,7 @@ void draw_altitude_scale() {
 
   uint16_t posX = osd_params.Alt_Scale_posX;
   float alt_shown;
+  float min_alt = 10;
 
   if (!isnan(osd_bottom_clearance)){
       alt_shown = osd_bottom_clearance;
@@ -1756,26 +1762,28 @@ void draw_altitude_scale() {
   }
 
   // Set min alt 3m
-  draw_vertical_scale(alt_shown * convert_distance, 40,
+  draw_vertical_scale(alt_shown * convert_distance, 60,
                       osd_params.Alt_Scale_align,
                       osd_params.Alt_Scale_posX,
-                      osd_params.Alt_Scale_posY, 100,
+                      osd_params.Alt_Scale_posY, 130,
 		      5, 10, 5, 8, 11,
-                      10000, HUD_VSCALE_FLAG_NO_NEGATIVE, 5);
+                      10000, HUD_VSCALE_FLAG_NO_NEGATIVE, min_alt);
 
   if ((osd_params.Alt_Scale_align == 1) && (posX > 15)) {
     posX -= 15;
   }
 
   write_string(tmp_str, posX,
-               osd_params.Alt_Scale_posY - 70, 0, 0, TEXT_VA_TOP,
+               osd_params.Alt_Scale_posY - 70 - 15, 0, 0, TEXT_VA_TOP,
                osd_params.Alt_Scale_align, 0,
                SIZE_TO_FONT[0]);
+
   if ((osd_params.Alt_Scale_align == 1) && (posX > 15)) {
-    posX += 10;
+      posX += 5;
   }
-  write_string("m", posX,
-               osd_params.Alt_Scale_posY + 60, 0, 0, TEXT_VA_TOP,
+
+  write_string("[m]", posX,
+               osd_params.Alt_Scale_posY + 60 + 20, 0, 0, TEXT_VA_TOP,
                osd_params.Alt_Scale_align, 0,
                SIZE_TO_FONT[0]);
 }
@@ -1827,34 +1835,35 @@ void draw_speed_scale() {
   }
 
   float spd_shown ;
-  int flags = 0;
+  float vmin = -1;
+  int  flags = HUD_VSCALE_FLAG_NO_NEGATIVE;
 
   if (vtol_state == MAV_VTOL_STATE_TRANSITION_TO_FW || vtol_state == MAV_VTOL_STATE_FW || mav_type == MAV_TYPE_FIXED_WING)
   {
       spd_shown = osd_airspeed;
-      flags = HUD_VSCALE_FLAG_NO_NEGATIVE;
       snprintf(tmp_str, sizeof(tmp_str), "AS");
+      // Set min airspeed 15 km/h
+      vmin = 15;
   } else {
       spd_shown = osd_groundspeed;
       snprintf(tmp_str, sizeof(tmp_str), "GS");
   }
 
-  // Set min airspeed 15 km/h
-  draw_vertical_scale(spd_shown * convert_speed, 40,
+  draw_vertical_scale(spd_shown * convert_speed, 60,
                       osd_params.Speed_scale_align,
                       osd_params.Speed_scale_posX,
-                      osd_params.Speed_scale_posY, 100,
+                      osd_params.Speed_scale_posY, 130,
 		      5, 10, 5, 8, 11,
-                      100, flags, 15);
+                      100, flags, vmin);
 
   write_string(tmp_str, osd_params.Speed_scale_posX,
-               osd_params.Speed_scale_posY - 70, 0, 0, TEXT_VA_TOP,
+               osd_params.Speed_scale_posY - 70 - 15, 0, 0, TEXT_VA_TOP,
                osd_params.Speed_scale_align, 0,
                SIZE_TO_FONT[0]);
 
-  snprintf(tmp_str, sizeof(tmp_str), "%s", spd_unit);
+  snprintf(tmp_str, sizeof(tmp_str), "[%s]", spd_unit);
   write_string(tmp_str, osd_params.Speed_scale_posX,
-               osd_params.Speed_scale_posY + 60, 0, 0, TEXT_VA_TOP,
+               osd_params.Speed_scale_posY + 60 + 20, 0, 0, TEXT_VA_TOP,
                osd_params.Speed_scale_align, 0,
                SIZE_TO_FONT[0]);
 }
@@ -1866,7 +1875,7 @@ void draw_ground_speed() {
   }
 
   float tmp = osd_groundspeed * convert_speed;
-  snprintf(tmp_str, sizeof(tmp_str), "GS: %d %s", (int) tmp, spd_unit);
+  snprintf(tmp_str, sizeof(tmp_str), "GS: %d", (int) tmp);
   write_string(tmp_str, osd_params.TSPD_posX,
                osd_params.TSPD_posY, 0, 0, TEXT_VA_TOP,
                osd_params.TSPD_align, 0,
