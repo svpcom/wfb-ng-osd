@@ -590,6 +590,7 @@ void draw_time() {
   }
 
   strftime(tmp_str, sizeof(tmp_str), "%H:%M:%S", lt);
+  //snprintf(tmp_str, sizeof(tmp_str), "%u", GetSystimeMS());
   write_string(tmp_str, osd_params.Time_posX,
                osd_params.Time_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Time_align, 0,
