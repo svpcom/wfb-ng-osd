@@ -4,6 +4,13 @@
 #include <pthread.h>
 #include "fonts.h"
 
+typedef enum
+{
+    OSD_RENDER_AUTO = 0,
+    OSD_RENDER_XV,
+    OSD_RENDER_GL,
+} osd_render_t;
+
 // Size of an array (num items.)
 #define SIZEOF_ARRAY(x) (sizeof(x) / sizeof((x)[0]))
 

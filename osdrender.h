@@ -22,7 +22,6 @@
 void osd_init(int shift_x, int shift_y, float scale_x, float scale_y);
 void render();
 
-
 /// GPS status codes
 enum GPS_Status {
   NO_GPS = 0,                   ///< No GPS connected/detected

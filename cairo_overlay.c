@@ -128,9 +128,27 @@ draw_overlay (GstElement * overlay, cairo_t * cr, guint64 timestamp,
     pthread_mutex_unlock(&video_mutex);
 }
 
+
+static const char* select_osd_render(osd_render_t osd_render)
+{
+    switch(osd_render)
+    {
+    case OSD_RENDER_XV:
+        return "xvimagesink";
+
+    case OSD_RENDER_GL:
+        return "glimagesink";
+
+    case OSD_RENDER_AUTO:
+    default:
+        return "autovideosink";
+    }
+}
+
+
 static GstElement *
 setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec, int rtp_jitter,
-                    int use_xv, int screen_width, char *rtsp_url)
+                    osd_render_t osd_render, int screen_width, char *rtsp_url)
 {
     char *pipeline_str;
     char *src_str;
@@ -163,7 +181,7 @@ setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec
              "videotestsrc pattern=solid-color foreground-color=0x00000000 is-live=true ! video/x-raw,width=%d,height=%d ! cairooverlay name=overlay ! glupload ! glcolorconvert ! osd. ",
              src_str, codec, codec, codec,
              screen_width, screen_height, screen_width, screen_height,
-             use_xv ? "xvimagesink" : "autovideosink",
+             select_osd_render(osd_render),
              GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
 
     free(src_str);
@@ -192,12 +210,15 @@ setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec
     return pipeline;
 }
 
-int gst_main(int rtp_port, char *codec, int rtp_jitter, int use_xv, int screen_width, char *rtsp_src)
+int gst_main(int rtp_port, char *codec, int rtp_jitter, osd_render_t osd_render, int screen_width, char *rtsp_src)
 {
     GMainLoop *loop;
     GstElement *pipeline;
     GstBus *bus;
     CairoOverlayState *overlay_state;
+
+    // Fix for intel hd graphics
+    setenv("GST_GL_PLATFORM", "egl", 0);
 
     gst_init (NULL, NULL);
     loop = g_main_loop_new (NULL, FALSE);
@@ -205,7 +226,7 @@ int gst_main(int rtp_port, char *codec, int rtp_jitter, int use_xv, int screen_w
     /* allocate on heap for pedagogical reasons, makes code easier to transfer */
     overlay_state = g_new0 (CairoOverlayState, 1);
 
-    pipeline = setup_gst_pipeline (overlay_state, rtp_port, codec, rtp_jitter, use_xv, screen_width, rtsp_src);
+    pipeline = setup_gst_pipeline (overlay_state, rtp_port, codec, rtp_jitter, osd_render, screen_width, rtsp_src);
 
     bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
     gst_bus_add_signal_watch (bus);

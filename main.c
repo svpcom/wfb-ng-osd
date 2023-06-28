@@ -47,7 +47,7 @@
 
 
 #ifdef __GST_CAIRO__
-int gst_main(int rtp_port, char *codec, int rtp_jitter, int use_xv, int screen_width, char *rtsp_url);
+int gst_main(int rtp_port, char *codec, int rtp_jitter, osd_render_t osd_render, int screen_width, char *rtsp_url);
 #endif
 
 int open_udp_socket_for_rx(int port)
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     int rtp_port = 5600;
     char* codec = "h264";
     int rtp_jitter = 5;
-    int use_xv = 0;
+    osd_render_t osd_render = OSD_RENDER_AUTO;
     int screen_width = 1920;
     char *rtsp_url = NULL;
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
     int fd;
     struct pollfd fds[1];
 
-    while ((opt = getopt(argc, argv, "hp:P:R:45j:xw:")) != -1) {
+    while ((opt = getopt(argc, argv, "hp:P:R:45j:xgw:")) != -1) {
         switch (opt) {
         case 'p':
             osd_port = atoi(optarg);
@@ -119,7 +119,11 @@ int main(int argc, char **argv)
             break;
 
         case 'x':
-            use_xv = 1;
+            osd_render = OSD_RENDER_XV;
+            break;
+
+        case 'g':
+            osd_render = OSD_RENDER_GL;
             break;
 
         case 'w':
@@ -129,11 +133,11 @@ int main(int argc, char **argv)
         case 'h':
         default:
         show_usage:
-            fprintf(stderr, "%s [-p mavlink_port] [-P rtp_port] [ -R rtsp_url ] [-4] [-5] [-j rtp_jitter] [-v] [-x] [-w screen_width] \n", argv[0]);
-            fprintf(stderr, "Default: mavlink_port=%d, rtp_port=%d, rtsp_url=%s, codec=%s, rtp_jitter=%d, use_xv=%d, screen_width=%d\n",
+            fprintf(stderr, "%s [-p mavlink_port] [-P rtp_port] [ -R rtsp_url ] [-4] [-5] [-j rtp_jitter] [-x] [-g] [-w screen_width] \n", argv[0]);
+            fprintf(stderr, "Default: mavlink_port=%d, rtp_port=%d, rtsp_url=%s, codec=%s, rtp_jitter=%d, screen_width=%d\n",
                     osd_port, rtp_port,
                     rtsp_url != NULL ? rtsp_url : "none",
-                    codec, rtp_jitter, use_xv, screen_width);
+                    codec, rtp_jitter, screen_width);
 
             fprintf(stderr, "WFB-ng OSD version " WFB_OSD_VERSION "\n");
             fprintf(stderr, "WFB-ng home page: <http://wfb-ng.org>\n");
@@ -145,17 +149,17 @@ int main(int argc, char **argv)
         goto show_usage;
     }
 
-    printf("Use: mavlink_port=%d, rtp_port=%d, rtsp_url=%s, codec=%s, rtp_jitter=%d, use_xv=%d, screen_width=%d\n",
+    printf("Use: mavlink_port=%d, rtp_port=%d, rtsp_url=%s, codec=%s, rtp_jitter=%d, osd_render=%d, screen_width=%d\n",
            osd_port, rtp_port,
            rtsp_url != NULL ? rtsp_url : "none",
-           codec, rtp_jitter, use_xv, screen_width);
+           codec, rtp_jitter, osd_render, screen_width);
 
     osd_init(0, 0, 1, 1);
 
 #ifdef __GST_CAIRO__
     void* gst_thread_start(void *arg)
     {
-        gst_main(rtp_port, codec, rtp_jitter, use_xv, screen_width, rtsp_url);
+        gst_main(rtp_port, codec, rtp_jitter, osd_render, screen_width, rtsp_url);
         fprintf(stderr, "gst thread exited\n");
         exit(1);
     }
