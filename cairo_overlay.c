@@ -156,9 +156,9 @@ setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec
              "rtp%sdepay ! "
              "%sparse config-interval=1 disable-passthrough=true ! "
              "avdec_%s ! "
-             "glupload ! glcolorconvert ! glcolorscale ! "
+             "glupload ! glcolorconvert ! "
              "glvideomixerelement background=black name=osd sink_0::width=%d sink_0::height=%d sink_1::width=%d sink_1::height=%d ! "
-             "glcolorscale ! glcolorconvert ! gldownload ! "
+             "glcolorconvert ! gldownload ! "
              "%s sync=false "
              "videotestsrc pattern=solid-color foreground-color=0x00000000 is-live=true ! video/x-raw,width=%d,height=%d ! cairooverlay name=overlay ! glupload ! glcolorconvert ! osd. ",
              src_str, codec, codec, codec,
