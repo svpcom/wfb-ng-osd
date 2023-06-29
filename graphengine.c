@@ -438,7 +438,8 @@ void write_line_lm(int x0, int y0, int x1, int y1, int opaq, int color) {
  * @param       y1                      second y coordinate
  * @param       endcap0         0 = none, 1 = single pixel, 2 = full cap
  * @param       endcap1         0 = none, 1 = single pixel, 2 = full cap
- * @param       mode            0 = black outline, white body, 1 = white outline, black body
+ * @param       mode            0 = black outline, white body, 1 = white outline, black body,
+                                2 = black outline, red body
  * @param       opaq           0 = clear, 1 = set, 2 = toggle
  */
 void write_line_outlined(int x0, int y0, int x1, int y1,
@@ -448,13 +449,24 @@ void write_line_outlined(int x0, int y0, int x1, int y1,
   // This could be improved for speed.
   int omode, imode;
 
-  if (mode == 0) {
-    omode = 0;
-    imode = 1;
-  } else {
-    omode = 1;
-    imode = 0;
+  switch(mode)
+  {
+  case 0:
+      omode = 0;
+      imode = 1;
+      break;
+  case 1:
+      omode = 1;
+      imode = 0;
+      break;
+  case 2:
+      omode = 0;
+      imode = 2;
+      break;
+  default:
+      assert(0);
   }
+
   int steep = abs(y1 - y0) > abs(x1 - x0);
   if (steep) {
     SWAP(x0, y0);

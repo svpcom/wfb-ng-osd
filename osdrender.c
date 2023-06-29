@@ -218,6 +218,9 @@ void draw_simple_attitude() {
   int x = simple_attitude.x0;
   int y = simple_attitude.y0;
 
+  int line_mode = fabsf(osd_roll) < 90 ? 0 : 2;
+  int roll_color = fabsf(osd_roll) < 90 ? 1 : 2;
+
   write_line_outlined(x - radius - 1, y, x - 3 * radius - 1, y, 0, 0, 0, 1);
   write_line_outlined(x + radius - 1, y, x + 3 * radius + 1, y, 0, 0, 0, 1);
   write_line_outlined(x, y - radius - 1, x, y - 3 * radius, 0, 0, 0, 1);
@@ -228,7 +231,7 @@ void draw_simple_attitude() {
   for (int i = 0; i < simple_attitude.num_verts; i += 2) {
     write_line_outlined(simple_attitude.vlist_trans[i].x + x, simple_attitude.vlist_trans[i].y + y,
                         simple_attitude.vlist_trans[i + 1].x + x, simple_attitude.vlist_trans[i + 1].y + y,
-                        2, 2, 0, 1);
+                        2, 2, line_mode, 1);
   }
 
   //draw pitch value
@@ -240,7 +243,7 @@ void draw_simple_attitude() {
   y = simple_attitude.y0 + 15;
 
   snprintf(tmp_str, sizeof(tmp_str), "RL %d", (int)osd_roll);
-  write_string(tmp_str, x, y + 5, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1]);
+  write_color_string(tmp_str, x, y + 5, 0, 0, TEXT_VA_TOP, TEXT_HA_CENTER, 0, SIZE_TO_FONT[1], roll_color);
 
 }
 
