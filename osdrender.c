@@ -1379,7 +1379,7 @@ void draw_warning(void) {
         break;
 
     case 8:
-        strncpy(warn_str, "WFB LOST", sizeof(warn_str));
+        strncpy(warn_str, "WFB LINK LOST", sizeof(warn_str));
         break;
 
     case 9:
@@ -1716,7 +1716,7 @@ void draw_wfb_state() {
   if (wfb_flags & WFB_LINK_LOST)
   {
       color = 2;
-      snprintf(tmp_str, sizeof(tmp_str), "WFB LOST");
+      snprintf(tmp_str, sizeof(tmp_str), "WFB LINK LOST");
   }
   else if (wfb_flags & WFB_LINK_JAMMED)
   {
