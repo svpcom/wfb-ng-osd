@@ -2,7 +2,7 @@ mode?=gst
 ARCH ?= $(shell uname -i)
 PYTHON ?= /usr/bin/python3
 COMMIT ?= $(shell git rev-parse HEAD)
-VERSION ?= $(shell $(PYTHON) ./version.py $(shell git show -s --format="%ct" $(shell git rev-parse HEAD)) $(shell git rev-parse --abbrev-ref HEAD))
+VERSION ?= $(shell $(PYTHON) ./version.py $(shell git show -s --format="%ct" $(shell git rev-parse HEAD)) 'release-23.08')
 SOURCE_DATE_EPOCH ?= $(shell git show -s --format="%ct" $(shell git rev-parse HEAD))
 
 export VERSION COMMIT SOURCE_DATE_EPOCH
