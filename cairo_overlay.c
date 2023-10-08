@@ -134,14 +134,14 @@ static const char* select_osd_render(osd_render_t osd_render)
     switch(osd_render)
     {
     case OSD_RENDER_XV:
-        return "xvimagesink";
+        return "glcolorconvert ! gldownload ! xvimagesink";
 
     case OSD_RENDER_GL:
         return "glimagesink";
 
     case OSD_RENDER_AUTO:
     default:
-        return "autovideosink";
+        return "glcolorconvert ! gldownload ! autovideosink";
     }
 }
 
@@ -164,9 +164,8 @@ setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec
                  "rtspsrc latency=%d location=\"%s\"", rtp_jitter, rtsp_url);
     } else {
         asprintf(&src_str,
-                 "udpsrc port=%d caps=\"application/x-rtp,media=(string)video,  clock-rate=(int)90000, encoding-name=(string)H%s\" ! "
-                 "rtpjitterbuffer latency=%d",
-                 rtp_port, codec + 1, rtp_jitter);
+                 "udpsrc port=%d caps=\"application/x-rtp,media=(string)video,  clock-rate=(int)90000, encoding-name=(string)H%s\"",
+                 rtp_port, codec + 1);
     }
 
     asprintf(&pipeline_str,
@@ -174,10 +173,10 @@ setup_gst_pipeline (CairoOverlayState * overlay_state, int rtp_port, char *codec
              "rtp%sdepay ! "
              "%sparse config-interval=1 disable-passthrough=true ! "
              "avdec_%s ! "
+             "queue ! "
              "glupload ! glcolorconvert ! "
              "glvideomixerelement background=black name=osd sink_0::width=%d sink_0::height=%d sink_1::width=%d sink_1::height=%d ! "
-             "glcolorconvert ! gldownload ! "
-             "%s sync=false "
+             "%s sync=true "
              "videotestsrc pattern=solid-color foreground-color=0x00000000 is-live=true ! video/x-raw,width=%d,height=%d ! cairooverlay name=overlay ! glupload ! glcolorconvert ! osd. ",
              src_str, codec, codec, codec,
              screen_width, screen_height, screen_width, screen_height,

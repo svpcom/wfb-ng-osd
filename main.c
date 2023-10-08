@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     int rtp_port = 5600;
     char* codec = "h264";
     int rtp_jitter = 5;
-    osd_render_t osd_render = OSD_RENDER_AUTO;
+    osd_render_t osd_render = OSD_RENDER_GL;
     int screen_width = 1920;
     char *rtsp_url = NULL;
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
     int fd;
     struct pollfd fds[1];
 
-    while ((opt = getopt(argc, argv, "hp:P:R:45j:xgw:")) != -1) {
+    while ((opt = getopt(argc, argv, "hp:P:R:45j:xaw:")) != -1) {
         switch (opt) {
         case 'p':
             osd_port = atoi(optarg);
@@ -122,8 +122,8 @@ int main(int argc, char **argv)
             osd_render = OSD_RENDER_XV;
             break;
 
-        case 'g':
-            osd_render = OSD_RENDER_GL;
+        case 'a':
+            osd_render = OSD_RENDER_AUTO;
             break;
 
         case 'w':
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
         case 'h':
         default:
         show_usage:
-            fprintf(stderr, "%s [-p mavlink_port] [-P rtp_port] [ -R rtsp_url ] [-4] [-5] [-j rtp_jitter] [-x] [-g] [-w screen_width] \n", argv[0]);
+            fprintf(stderr, "%s [-p mavlink_port] [-P rtp_port] [ -R rtsp_url ] [-4] [-5] [-j rtp_jitter] [-x] [-a] [-w screen_width] \n", argv[0]);
             fprintf(stderr, "Default: mavlink_port=%d, rtp_port=%d, rtsp_url=%s, codec=%s, rtp_jitter=%d, screen_width=%d\n",
                     osd_port, rtp_port,
                     rtsp_url != NULL ? rtsp_url : "none",
