@@ -35,7 +35,7 @@ Default mavlink port which OSD listen is 14550.
    * Run test video stream (OSD will not work without video stream)
    ```
       gst-launch-1.0 videotestsrc pattern=black ! videoconvert ! \
-      video/x-raw,format=NV12,framerate=30/1,width=1280,height=720 ! \
+      video/x-raw,format=NV12,framerate=30/1,width=1280,height=720,format=I420 ! \
       x264enc bitrate=4000 tune=zerolatency ! rtph264pay config-interval=1 ! \
       udpsink host=127.0.0.1 port=5600
    ```
