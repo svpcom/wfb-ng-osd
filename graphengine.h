@@ -128,9 +128,10 @@ extern int screen_width, screen_height;
 
 uint8_t getCharData(uint16_t charPos);
 
+void* render(void);
 void render_init(int shift_x, int shift_y, float scale_x, float scale_y);
 void clearGraphics(void);
-void displayGraphics(void);
+void* displayGraphics(void);
 
 //void drawArrow(uint16_t x, uint16_t y, uint16_t angle, uint16_t size);
 void drawBox(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);

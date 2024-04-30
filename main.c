@@ -46,7 +46,7 @@
 #include "graphengine.h"
 
 
-#ifdef __GST_CAIRO__
+#ifdef __GST_OPENGL__
 int gst_main(int rtp_port, char *codec, int rtp_jitter, osd_render_t osd_render, int screen_width, char *rtsp_url);
 #endif
 
@@ -155,8 +155,9 @@ int main(int argc, char **argv)
            codec, rtp_jitter, osd_render, screen_width);
 
     osd_init(0, 0, 1, 1);
+    fd = open_udp_socket_for_rx(osd_port);
 
-#ifdef __GST_CAIRO__
+#ifdef __GST_OPENGL__
     void* gst_thread_start(void *arg)
     {
         gst_main(rtp_port, codec, rtp_jitter, osd_render, screen_width, rtsp_url);
@@ -166,17 +167,32 @@ int main(int argc, char **argv)
 
     pthread_t tid;
     pthread_create(&tid, NULL, gst_thread_start, NULL);
-#endif
 
-    memset(fds, '\0', sizeof(fds));
-    fd = open_udp_socket_for_rx(osd_port);
+    while(1)
+    {
+        ssize_t rsize;
+        while((rsize = recv(fd, buf, sizeof(buf), 0)) >= 0)
+        {
+            // Avoid race with rendering in gstreamer
+            pthread_mutex_lock(&video_mutex);
+            parse_mavlink_packet(buf, rsize);
+            pthread_mutex_unlock(&video_mutex);
+        }
 
+        if (rsize < 0 && errno != EINTR)
+        {
+            perror("Error receiving packet");
+            exit(1);
+        }
+    }
+#else
     if(fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK) < 0)
     {
         perror("Unable to set socket into nonblocked mode");
         exit(1);
     }
 
+    memset(fds, '\0', sizeof(fds));
     fds[0].fd = fd;
     fds[0].events = POLLIN;
 
@@ -217,6 +233,6 @@ int main(int argc, char **argv)
             render();
         }
     }
-
+#endif
     return 0;
 }

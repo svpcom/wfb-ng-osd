@@ -41,6 +41,10 @@
 #include "eglstate.h"
 #endif
 
+#ifdef __GST_OPENGL__
+#include <gst/gst.h>
+#endif
+
 #include "graphengine.h"
 #include "math3d.h"
 #include "fonts.h"
@@ -49,8 +53,6 @@
 
 
 static uint8_t* video_buf_int = NULL;
-uint8_t* video_buf_ext = NULL;
-pthread_mutex_t video_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #ifdef __BCM_OPENVG__
 STATE_T ogl_state;
@@ -107,30 +109,45 @@ void displayGraphics(void) {
     assert(vgGetError() == VG_NO_ERROR);
     eglSwapBuffers(ogl_state.display, ogl_state.surface);
     assert(eglGetError() == EGL_SUCCESS);
+    return NULL;
 }
 
 #endif
 
 
-#ifdef __GST_CAIRO__
+#ifdef __GST_OPENGL__
+static GstBuffer *gst_buffer;
+static GstMapInfo info_in;
+pthread_mutex_t video_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void render_init(int shift_x, int shift_y, float scale_x, float scale_y)
 {
-    video_buf_ext = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
-    video_buf_int = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
+    gst_buffer = NULL;
+    video_buf_int = NULL;
 }
 
 void clearGraphics(void)
 {
-    memset(video_buf_int, '\0', GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
+    gst_buffer = gst_buffer_new_allocate(NULL, GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4, NULL);
+    gst_buffer_memset(gst_buffer, 0, 0, GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
+    gst_buffer_map(gst_buffer, &info_in, GST_MAP_WRITE);
+    video_buf_int = info_in.data; // ARGB
 }
 
-void displayGraphics(void)
+void *displayGraphics(void)
 {
-    pthread_mutex_lock(&video_mutex);
-    memcpy(video_buf_ext, video_buf_int, GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
-    pthread_mutex_unlock(&video_mutex);
+    gst_buffer_unmap(gst_buffer, &info_in);
+    return gst_buffer;
 }
 #endif
+
+
+void* render(void)
+{
+    clearGraphics();
+    RenderScreen();
+    return displayGraphics();
+}
 
 //void drawArrow(uint16_t x, uint16_t y, uint16_t angle, uint16_t size_quarter)
 //{

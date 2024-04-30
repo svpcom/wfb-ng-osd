@@ -123,13 +123,6 @@ bool enabledAndShownOnPanel(uint16_t enabled, uint16_t panel) {
   return enabled == 1 && shownAtPanel(panel);
 }
 
-
-void render() {
-    clearGraphics();
-    RenderScreen();
-    displayGraphics();
-}
-
 // TODO: try if this is performance critical or not
 char tmp_str[51] = { 0 };
 
@@ -1754,14 +1747,14 @@ void draw_altitude_scale() {
 
   if (!isnan(osd_bottom_clearance)){
       alt_shown = osd_bottom_clearance;
-      snprintf(tmp_str, sizeof(tmp_str), "TALT");
+      snprintf(tmp_str, sizeof(tmp_str), "AGL");
   }else{
       if (osd_params.Alt_Scale_type == 0) {
           alt_shown = osd_alt;
-          snprintf(tmp_str, sizeof(tmp_str), "AMSL");
+          snprintf(tmp_str, sizeof(tmp_str), "MSL");
       }else{
           alt_shown = osd_rel_alt;
-          snprintf(tmp_str, sizeof(tmp_str), "RALT");
+          snprintf(tmp_str, sizeof(tmp_str), "REL");
       }
   }
 
