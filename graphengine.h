@@ -4,6 +4,8 @@
 #include <pthread.h>
 #include "fonts.h"
 
+extern int osd_debug;
+
 typedef enum
 {
     OSD_RENDER_AUTO = 0,

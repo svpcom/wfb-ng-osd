@@ -50,6 +50,8 @@
 int gst_main(int rtp_port, char *codec, int rtp_jitter, osd_render_t osd_render, int screen_width, char *rtsp_url);
 #endif
 
+int osd_debug = 0;
+
 int open_udp_socket_for_rx(int port)
 {
     struct sockaddr_in saddr;
@@ -92,7 +94,7 @@ int main(int argc, char **argv)
     int fd;
     struct pollfd fds[1];
 
-    while ((opt = getopt(argc, argv, "hp:P:R:45j:xaw:")) != -1) {
+    while ((opt = getopt(argc, argv, "hdp:P:R:45j:xaw:")) != -1) {
         switch (opt) {
         case 'p':
             osd_port = atoi(optarg);
@@ -128,6 +130,10 @@ int main(int argc, char **argv)
 
         case 'w':
             screen_width = atoi(optarg);
+            break;
+
+        case 'd':
+            osd_debug = 1;
             break;
 
         case 'h':

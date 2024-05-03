@@ -83,33 +83,26 @@ on_message (GstBus * bus, GstMessage * message, gpointer user_data)
 
 static void cb_need_data (GstElement *appsrc, guint unused_size, gpointer user_data)
 {
-    static GstClockTime timestamp = 0;
     GMainLoop *loop = (GMainLoop *) user_data;
 
     pthread_mutex_lock(&video_mutex);
     GstBuffer *buffer = render();
     pthread_mutex_unlock(&video_mutex);
 
-    /* struct timespec  ts; */
+    GST_BUFFER_PTS (buffer) = gst_element_get_current_running_time(appsrc);
 
-    /* if (clock_gettime(CLOCK_REALTIME, &ts) == -1) { */
-    /*     perror("clock_gettime"); */
-    /*     exit(EXIT_FAILURE); */
-    /* } */
-
-    /* fprintf(stderr, "render ts: %10jd.%03ld\n", */
-    /*         (intmax_t) ts.tv_sec, ts.tv_nsec / 1000000); */
-
-    /* fflush(stderr); */
-
-    GST_BUFFER_PTS (buffer) = timestamp;
+    // set to min supported fps,
+    // but low value will increase latency.
+    // If fps lower than selected then cpu usage will increase a lot
     GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 30);
+    GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_LIVE);
+    GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DROPPABLE);
 
-    timestamp += GST_BUFFER_DURATION (buffer);
-
+    //GstFlowReturn ret = gst_app_src_push_buffer(appsrc, buffer);
     GstFlowReturn ret;
     g_signal_emit_by_name (appsrc, "push-buffer", buffer, &ret);
     gst_buffer_unref (buffer);
+
 
     if (ret != GST_FLOW_OK) {
         /* something wrong, stop pushing */
@@ -122,14 +115,20 @@ static const char* select_osd_render(osd_render_t osd_render)
     switch(osd_render)
     {
     case OSD_RENDER_XV:
-        return "glcolorconvert ! gldownload ! xvimagesink";
+        return osd_debug ? \
+            "glcolorconvert ! gldownload ! clockoverlay text=XV valignment=center ! xvimagesink" : \
+            "glcolorconvert ! gldownload ! xvimagesink";
 
     case OSD_RENDER_GL:
-        return "glimagesink";
+        return osd_debug ? \
+            "clockoverlay text=GL valignment=center ! glimagesink" : \
+            "glimagesink";
 
     case OSD_RENDER_AUTO:
     default:
-        return "glcolorconvert ! gldownload ! autovideosink";
+        return osd_debug ? \
+            "glcolorconvert ! gldownload ! clockoverlay text=Auto valignment=center ! autovideosink" : \
+            "glcolorconvert ! gldownload ! autovideosink";
     }
 }
 
@@ -163,22 +162,50 @@ int gst_main(int rtp_port, char *codec, int rtp_jitter, osd_render_t osd_render,
                      rtp_port, codec + 1);
         }
 
+        char *codecs[] = { "nv%sdec", "avdec_%s" };
+        char *decoder = NULL;
+
+        for(int i = 0; i < sizeof(codecs) / sizeof(codecs[0]); i++)
+        {
+            char *buf = NULL;
+            asprintf(&buf, codecs[i], codec);
+            GstElement *tmp = gst_element_factory_make(buf, "decoder");
+
+            if(tmp != NULL)
+            {
+                gst_object_unref(tmp);
+                decoder = buf;
+                break;
+            }
+
+            free(buf);
+        }
+
+        if(decoder == NULL)
+        {
+            fprintf(stderr, "No decoder for %s was found\n", codec);
+            exit(1);
+        }
+
         asprintf(&pipeline_str,
                  "%s ! "
                  "rtp%sdepay ! "
                  "%sparse config-interval=1 disable-passthrough=true ! "
-                 "avdec_%s ! "
-                 "queue ! "
+                 "%s qos=false ! "
+                 "queue leaky=downstream max-size-buffers=1 max-size-bytes=0 ! "
                  "glupload ! glcolorconvert ! "
-                 "glvideomixerelement background=black name=osd sink_0::width=%d sink_0::height=%d sink_1::width=%d sink_1::height=%d ! "
-                 "video/x-raw(memory:GLMemory),width=%d,height=%d ! %s sync=true "
-                 "appsrc leaky-type=downstream name=osd_src stream-type=0 format=time is-live=true min-latency=0 max-buffers=1 max-bytes=0 ! video/x-raw,format=BGRA,width=%d,height=%d,framerate=30/1 ! glupload ! glcolorconvert ! osd. ",
-                 src_str, codec, codec, codec,
-                 screen_width, screen_height, screen_width, screen_height, screen_width, screen_height,
+                 "glvideomixerelement emit-signals=true start-time-selection=1 background=black name=osd_mixer sink_0::emit-signals=true sink_0::width=%d sink_0::height=%d sink_1::emit-signals=true sink_1::width=%d sink_1::height=%d ! "
+                 "%s sync=true "
+                 "appsrc name=osd_src stream-type=0 format=time min-latency=0 ! "
+                 "video/x-raw,format=RGBA,width=%d,height=%d,framerate=0/1 ! glupload ! glcolorconvert ! osd_mixer. ",
+                 src_str, codec, codec, decoder,
+                 screen_width, screen_height, screen_width, screen_height,
                  select_osd_render(osd_render),
                  GRAPHICS_WIDTH, GRAPHICS_HEIGHT);
 
         free(src_str);
+        free(decoder);
+
         printf("GST pipeline: %s\n", pipeline_str);
 
         pipeline = gst_parse_launch(pipeline_str, &error);

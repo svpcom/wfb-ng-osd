@@ -70,7 +70,7 @@ void render_init(int shift_x, int shift_y, float scale_x, float scale_y)
     corr_scale_y = scale_y;
 
     fprintf(stderr, "Screen HW %dx%d, virtual %dx%d, corr %d, %d, %f, %f \n", ogl_state.screen_width, ogl_state.screen_height, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, corr_x, corr_y, corr_scale_x, corr_scale_y);
-    video_buf_int = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4); // ARGB
+    video_buf_int = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
 }
 
 void clearGraphics(void) {
@@ -87,7 +87,7 @@ void displayGraphics(void) {
 
     // convert video buffer into image
     unsigned int dstride = GRAPHICS_WIDTH * 4;
-    VGImageFormat rgbaFormat = VG_sARGB_8888;
+    VGImageFormat rgbaFormat = VG_sABGR_8888;
 
     VGImage img = vgCreateImage(rgbaFormat, GRAPHICS_WIDTH, GRAPHICS_HEIGHT, VG_IMAGE_QUALITY_NONANTIALIASED);
 
@@ -131,7 +131,7 @@ void clearGraphics(void)
     gst_buffer = gst_buffer_new_allocate(NULL, GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4, NULL);
     gst_buffer_memset(gst_buffer, 0, 0, GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
     gst_buffer_map(gst_buffer, &info_in, GST_MAP_WRITE);
-    video_buf_int = info_in.data; // ARGB
+    video_buf_int = info_in.data;
 }
 
 void *displayGraphics(void)
@@ -195,6 +195,9 @@ void inline write_pixel_lm(int x, int y, int opaq, int color){
       return;
     }
 
+    // BE: ABGR
+    // LE: RGBA
+
     switch(color)
     {
     case 0: //black
@@ -202,11 +205,11 @@ void inline write_pixel_lm(int x, int y, int opaq, int color){
         break;
 
     case 1: // monochrome crt green
-        *ptr = 0xff00ff41u;
+        *ptr = 0xff41ff00u;
         break;
 
     case 2: // amber
-      *ptr = 0xffff0000u;
+      *ptr = 0xff0000ffu;
       break;
     }
 }

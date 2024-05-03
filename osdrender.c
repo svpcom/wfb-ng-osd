@@ -578,15 +578,22 @@ void draw_time() {
     return;
   }
 
-  time_t t = time(NULL);
-  struct tm *lt = localtime(&t);
+  if(osd_debug)
+  {
+      snprintf(tmp_str, sizeof(tmp_str), "%lu", GetSystimeMS() % 1000000L);
+  }
+  else
+  {
+      time_t t = time(NULL);
+      struct tm *lt = localtime(&t);
 
-  if (lt == NULL){
-      return;
+      if (lt == NULL){
+          return;
+      }
+
+      strftime(tmp_str, sizeof(tmp_str), "%H:%M:%S", lt);
   }
 
-  strftime(tmp_str, sizeof(tmp_str), "%H:%M:%S", lt);
-  //snprintf(tmp_str, sizeof(tmp_str), "%u", GetSystimeMS());
   write_string(tmp_str, osd_params.Time_posX,
                osd_params.Time_posY, 0, 0, TEXT_VA_TOP,
                osd_params.Time_align, 0,
@@ -857,7 +864,7 @@ void draw_linear_compass(int v, int home_dir, int range, int width, int x, int y
   v %= 360;   // wrap, just in case.
   struct FontEntry font_info;
   int majtick_start = 0, majtick_end = 0, mintick_start = 0, mintick_end = 0, textoffset = 0;
-  char headingstr[4];
+  char headingstr[5];
   majtick_start = y;
   majtick_end   = y - majtick_len;
   mintick_start = y;
