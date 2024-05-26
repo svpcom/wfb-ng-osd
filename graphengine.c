@@ -77,7 +77,7 @@ void clearGraphics(void) {
     memset(video_buf_int, '\0', GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
 }
 
-void displayGraphics(void) {
+void* displayGraphics(void) {
     VGfloat bg_color[4] = { 0, 0, 0, 0 };
 
     vgSetfv(VG_CLEAR_COLOR, 4, bg_color);
