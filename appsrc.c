@@ -19,6 +19,9 @@
 
 #define _GNU_SOURCE
 
+// Local camera overlay
+#define LOCAL_CAMERA_SUPPORT 0
+
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/video/video.h>
@@ -194,10 +197,19 @@ int gst_main(int rtp_port, char *codec, int rtp_jitter, osd_render_t osd_render,
                  "%s qos=false ! "
                  "queue leaky=downstream max-size-buffers=1 max-size-bytes=0 ! "
                  "glupload ! glcolorconvert ! "
-                 "glvideomixerelement emit-signals=true start-time-selection=1 background=black name=osd_mixer sink_0::emit-signals=true sink_0::width=%d sink_0::height=%d sink_1::emit-signals=true sink_1::width=%d sink_1::height=%d ! "
-                 "%s sync=true "
+                 "glvideomixerelement emit-signals=true start-time-selection=1 name=osd_mixer "
+                 "sink_0::emit-signals=true sink_0::width=%d sink_0::height=%d sink_0::zorder=-2 "
+                 "sink_1::emit-signals=true sink_1::width=%d sink_1::height=%d sink_1::zorder=0 "
+#if LOCAL_CAMERA_SUPPORT
+                 "sink_2::emit-signals=true sink_2::width=640 sink_2::height=360 sink_2::zorder=-1 "
+#endif
+                 "! %s sync=true "
                  "appsrc name=osd_src stream-type=0 format=time min-latency=0 ! "
-                 "video/x-raw,format=RGBA,width=%d,height=%d,framerate=0/1 ! glupload ! glcolorconvert ! osd_mixer. ",
+                 "video/x-raw,format=RGBA,width=%d,height=%d,framerate=0/1 ! glupload ! glcolorconvert ! osd_mixer. "
+#if LOCAL_CAMERA_SUPPORT
+                 "v4l2src device=/dev/video2 ! video/x-raw,width=640,height=360,framerate=30/1 ! queue ! glupload ! glcolorconvert ! osd_mixer."
+#endif
+                 ,
                  src_str, codec, codec, decoder,
                  screen_width, screen_height, screen_width, screen_height,
                  select_osd_render(osd_render),
