@@ -45,6 +45,7 @@
 #include <gst/gst.h>
 #endif
 
+#include "osdrender.h"
 #include "graphengine.h"
 #include "math3d.h"
 #include "fonts.h"
