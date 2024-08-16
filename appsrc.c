@@ -33,6 +33,10 @@
 
 #include "graphengine.h"
 
+// For gstreamer < 1.18
+GstClockTime gst_element_get_current_running_time (GstElement * element);
+
+
 static gboolean
 on_message (GstBus * bus, GstMessage * message, gpointer user_data)
 {
