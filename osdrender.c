@@ -1264,10 +1264,7 @@ void draw_wind(void) {
 
 void draw_warning(void) {
   bool haswarn = false;
-  uint8_t warning[] = { 0, 0, 0,
-                        0, 0, 0,
-                        0, 0, 0,
-                        0 };
+  uint8_t warning[8] = {};
 
   //no GPS fix!
   if (osd_params.Alarm_GPS_status_en == 1 && (osd_fix_type < GPS_OK_FIX_3D)) {
@@ -1326,16 +1323,6 @@ void draw_warning(void) {
     warning[7] = 1;
   }
 
-  if (osd_params.Alarm_wfb_status_en == 1 && (wfb_flags & WFB_LINK_LOST)) {
-    haswarn = true;
-    warning[8] = 1;
-  }
-
-  if (osd_params.Alarm_wfb_status_en == 1 && (wfb_flags & WFB_LINK_JAMMED)) {
-    haswarn = true;
-    warning[9] = 1;
-  }
-
   if (haswarn && (GetSystimeMS() - last_warn_time) >= 1000) {
     last_warn_time = GetSystimeMS();
 
@@ -1377,15 +1364,6 @@ void draw_warning(void) {
     case 7:
         strncpy(warn_str, "RC LOST", sizeof(warn_str));
         break;
-
-    case 8:
-        strncpy(warn_str, "WFB LINK LOST", sizeof(warn_str));
-        break;
-
-    case 9:
-        strncpy(warn_str, "WFB JAMMED", sizeof(warn_str));
-        break;
-
     }
   }
 
@@ -1632,9 +1610,12 @@ void draw_flight_mode() {
       break;
   }
 
-  write_string(mode_str, osd_params.FlightMode_posX, osd_params.FlightMode_posY,
-               0, 0, TEXT_VA_TOP, osd_params.FlightMode_align, 0,
-               SIZE_TO_FONT[osd_params.FlightMode_fontsize]);
+  int color = (!motor_armed || wfb_errors > 0 || wfb_flags & (WFB_LINK_LOST | WFB_LINK_JAMMED)) ? 2 : 1;
+
+  write_color_string(mode_str, osd_params.FlightMode_posX, osd_params.FlightMode_posY,
+                     0, 0, TEXT_VA_TOP, osd_params.FlightMode_align, 0,
+                     SIZE_TO_FONT[osd_params.FlightMode_fontsize],
+                     color);
 }
 
 void draw_arm_state() {
