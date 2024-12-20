@@ -5,7 +5,7 @@ set -x
 apt-get update
 apt-get install build-essential libraspberrypi0 libraspberrypi-bin gstreamer1.0-tools gstreamer1.0-plugins-good
 
-make mode=rpi codec=h264
+make mode=rpi3
 
 cp -a osd fpv_video/{fpv_video,fpv_video.sh} /usr/bin
 

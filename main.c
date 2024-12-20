@@ -50,7 +50,13 @@
 int gst_main(int rtp_port, char *codec, int rtp_jitter, osd_render_t osd_render, int screen_width, char *rtsp_url);
 #endif
 
+static volatile uint8_t finished = 0;
 int osd_debug = 0;
+
+void sigterm_handler(int signum)
+{
+    finished = 1;
+}
 
 int open_udp_socket_for_rx(int port)
 {
@@ -139,12 +145,17 @@ int main(int argc, char **argv)
         case 'h':
         default:
         show_usage:
+
+#ifdef __GST_OPENGL__
             fprintf(stderr, "%s [-p mavlink_port] [-P rtp_port] [ -R rtsp_url ] [-4] [-5] [-j rtp_jitter] [-x] [-a] [-w screen_width] \n", argv[0]);
             fprintf(stderr, "Default: mavlink_port=%d, rtp_port=%d, rtsp_url=%s, codec=%s, rtp_jitter=%d, screen_width=%d\n",
                     osd_port, rtp_port,
                     rtsp_url != NULL ? rtsp_url : "none",
                     codec, rtp_jitter, screen_width);
-
+#else
+            fprintf(stderr, "%s [-p mavlink_port]\n", argv[0]);
+            fprintf(stderr, "Default: mavlink_port=%d\n", osd_port);
+#endif
             fprintf(stderr, "WFB-ng OSD version " WFB_OSD_VERSION "\n");
             fprintf(stderr, "WFB-ng home page: <http://wfb-ng.org>\n");
             exit(1);
@@ -155,6 +166,7 @@ int main(int argc, char **argv)
         goto show_usage;
     }
 
+#ifdef __GST_OPENGL__
     printf("Use: mavlink_port=%d, rtp_port=%d, rtsp_url=%s, codec=%s, rtp_jitter=%d, osd_render=%d, screen_width=%d\n",
            osd_port, rtp_port,
            rtsp_url != NULL ? rtsp_url : "none",
@@ -163,7 +175,6 @@ int main(int argc, char **argv)
     osd_init(0, 0, 1, 1);
     fd = open_udp_socket_for_rx(osd_port);
 
-#ifdef __GST_OPENGL__
     void* gst_thread_start(void *arg)
     {
         gst_main(rtp_port, codec, rtp_jitter, osd_render, screen_width, rtsp_url);
@@ -191,7 +202,13 @@ int main(int argc, char **argv)
             exit(1);
         }
     }
+
 #else
+    printf("Use mavlink_port=%d\n", osd_port);
+
+    osd_init(0, 0, 1, 1);
+    fd = open_udp_socket_for_rx(osd_port);
+
     if(fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK) < 0)
     {
         perror("Unable to set socket into nonblocked mode");
@@ -202,7 +219,11 @@ int main(int argc, char **argv)
     fds[0].fd = fd;
     fds[0].events = POLLIN;
 
-    while(1)
+    signal(SIGTERM, sigterm_handler);
+    signal(SIGINT, sigterm_handler);
+
+    fprintf(stderr, "Starting event loop\n");
+    while(!finished)
     {
         cur_ts = GetSystimeMS();
         uint64_t sleep_ts = render_ts > cur_ts ? render_ts - cur_ts : 0;
@@ -235,10 +256,11 @@ int main(int argc, char **argv)
         cur_ts = GetSystimeMS();
         if (render_ts <= cur_ts)
         {
-            render_ts = cur_ts + 1000 / 10; // 10 Hz max
+            render_ts = cur_ts + 1000 / 30; // 30Hz osd refresh rate
             render();
         }
     }
+    fprintf(stderr, "Event loop finished\n");
 #endif
     return 0;
 }

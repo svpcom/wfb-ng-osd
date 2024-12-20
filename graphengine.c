@@ -143,6 +143,36 @@ void *displayGraphics(void)
 #endif
 
 
+#ifdef __DRM_ROCKCHIP__
+
+int drm_init(void);
+void drm_cleanup(void);
+void drm_display_buffer(void *src_buf);
+
+void render_init(int shift_x, int shift_y, float scale_x, float scale_y)
+{
+    if(drm_init() != 0)
+    {
+        exit(1);
+    }
+    atexit(drm_cleanup);
+    video_buf_int = malloc(GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
+}
+
+void clearGraphics(void)
+{
+    memset(video_buf_int, '\0', GRAPHICS_WIDTH * GRAPHICS_HEIGHT * 4);
+}
+
+void* displayGraphics(void)
+{
+    drm_display_buffer(video_buf_int);
+    return NULL;
+}
+
+#endif
+
+
 void* render(void)
 {
     clearGraphics();
