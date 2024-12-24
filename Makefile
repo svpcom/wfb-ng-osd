@@ -1,6 +1,7 @@
 mode ?= gst
 ARCH ?= $(shell uname -i)
-PYTHON ?= /usr/bin/python3
+PYTHON ?= python3
+DOCKER_ARCH ?= amd64
 DOCKER_SRC_IMAGE ?= "p2ptech/cross-build:2023-02-21-raspios-bullseye-armhf-lite"
 
 ifneq ("$(wildcard .git)","")
@@ -35,21 +36,23 @@ endif
 
 all: osd
 
+osd: osd.$(mode)
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-osd: $(OBJS)
+osd.$(mode): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 
 osd_docker:  /opt/qemu/bin
 	@if ! [ -d /opt/qemu ]; then echo "Docker cross build requires patched QEMU!\nApply ./docker/qemu.patch to qemu-7.2.0 and build it:\n  ./configure --prefix=/opt/qemu --static --disable-system && make && sudo make install"; exit 1; fi
 	if ! ls /proc/sys/fs/binfmt_misc | grep -q qemu ; then sudo ./docker/qemu-binfmt-conf.sh --qemu-path /opt/qemu/bin --persistent yes; fi
-	TAG="wfb-ng-osd:build-`date +%s`"; docker build -t $$TAG docker --build-arg SRC_IMAGE=$(DOCKER_SRC_IMAGE)  && \
-	docker run -i --rm -v $(PWD):/build $$TAG bash -c "trap 'chown -R --reference=. .' EXIT; export VERSION=$(VERSION) COMMIT=$(COMMIT) SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) && cd /build && make clean && make osd mode=$(mode)"
+	TAG="wfb-ng-osd:build-`date +%s`"; docker build --platform linux/$(DOCKER_ARCH) -t $$TAG docker --build-arg SRC_IMAGE=$(DOCKER_SRC_IMAGE)  && \
+	docker run -i --rm --platform linux/$(DOCKER_ARCH) -v $(PWD):/build $$TAG bash -c "trap 'chown -R --reference=. .' EXIT; export VERSION=$(VERSION) COMMIT=$(COMMIT) SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) && cd /build && make clean && make osd mode=$(mode)"
 	docker image ls -q "wfb-ng-osd:build-*" | uniq | tail -n+6 | while read i ; do docker rmi -f $$i; done
 
 clean:
-	rm -f osd *.o *~
+	rm -f osd.$(mode) *.o *~
 	make -C fpv_video clean
 

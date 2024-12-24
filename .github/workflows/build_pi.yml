@@ -1,4 +1,4 @@
-name: WFB-ng-osd package builder for RPI and NanoPI
+name: WFB-ng-osd package builder for RPI
 
 on:
   push:
@@ -31,6 +31,6 @@ jobs:
         with:
           name: wfb-ng-osd-${{ github.ref_name }}-${{ matrix.docker-images }}
           path: |
-            osd
+            osd.gst
       - name: Output artifact URL
         run:  echo 'wfb-ng-osd-${{ github.ref_name }}-${{ matrix.docker-images }} ${{ steps.artifact-upload-step.outputs.artifact-url }}'
