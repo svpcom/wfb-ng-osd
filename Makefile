@@ -1,20 +1,32 @@
 mode ?= gst
 PYTHON ?= python3
 SHELL = /bin/bash
+ENV ?= $(PWD)/env
+OS_CODENAME ?= $(shell lsb_release -cs)
+STDEB ?= "git+https://github.com/svpcom/stdeb"
 DOCKER_ARCH ?= amd64
 DOCKER_SRC_IMAGE ?= "p2ptech/cross-build:2023-02-21-raspios-bullseye-armhf-lite"
+QEMU_CPU ?= "max"
 
 ifneq ("$(wildcard .git)","")
-    COMMIT ?= $(or $(shell git rev-parse HEAD), local)
-    VERSION ?= $(or $(shell $(PYTHON) ./version.py $(shell git show -s --format="%ct" $(shell git rev-parse HEAD)) $(shell git rev-parse --abbrev-ref HEAD)), 0.0.0)
-    SOURCE_DATE_EPOCH ?= $(or $(shell git show -s --format="%ct" $(shell git rev-parse HEAD)), $(shell date "+%s"))
+    RELEASE ?= $(or $(shell git rev-parse --abbrev-ref HEAD | grep -v '^stable$$'),\
+                    $(shell git describe --all --match 'release-*' --match 'origin/release-*' --abbrev=0 HEAD 2>/dev/null | grep -o '[^/]*$$'),\
+                    unknown)
+    COMMIT ?= $(shell git rev-parse HEAD)
+    SOURCE_DATE_EPOCH ?= $(or $(shell git show -s --format="%ct" $(COMMIT)), $(shell date "+%s"))
+    VERSION ?= $(shell $(PYTHON) ./version.py $(SOURCE_DATE_EPOCH) $(RELEASE))
 else
-    COMMIT ?= local
-    VERSION ?= 0.0.0
+    COMMIT ?= release
     SOURCE_DATE_EPOCH ?= $(shell date "+%s")
+    VERSION ?= $(or $(shell basename $(PWD) | grep -E -o '[0-9]+.[0-9]+(.[0-9]+)?$$'), 0.0.0)
 endif
 
 export VERSION COMMIT SOURCE_DATE_EPOCH
+export OSD_MODE=$(mode)
+
+$(ENV):
+	$(PYTHON) -m virtualenv --download $(ENV)
+	$$(PATH=$(ENV)/bin:$(ENV)/local/bin:$(PATH) which python3) -m pip install --upgrade pip setuptools $(STDEB)
 
 CFLAGS += -DWFB_OSD_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"'
 
@@ -44,15 +56,22 @@ osd: osd.$(mode)
 osd.$(mode): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+deb: osd $(ENV)
+	rm -rf deb_dist
+	$$(PATH=$(ENV)/bin:$(ENV)/local/bin:$(PATH) which python3) ./setup.py --command-packages=stdeb.command sdist_dsc --debian-version 0~$(OS_CODENAME) --package3 wfb-ng-osd-$(mode) bdist_deb
+	rm -rf wfb_ng_osd.egg-info/ wfb-ng-osd-$(VERSION).tar.gz
 
-osd_docker:  /opt/qemu/bin
+deb_docker:  /opt/qemu/bin
 	@if ! [ -d /opt/qemu ]; then echo "Docker cross build requires patched QEMU!\nApply ./docker/qemu.patch to qemu-7.2.0 and build it:\n  ./configure --prefix=/opt/qemu --static --disable-system && make && sudo make install"; exit 1; fi
 	if ! ls /proc/sys/fs/binfmt_misc | grep -q qemu ; then sudo ./docker/qemu-binfmt-conf.sh --qemu-path /opt/qemu/bin --persistent yes; fi
-	TAG="wfb-ng-osd:build-`date +%s`"; docker build --platform linux/$(DOCKER_ARCH) -t $$TAG docker --build-arg SRC_IMAGE=$(DOCKER_SRC_IMAGE)  && \
-	docker run -i --rm --platform linux/$(DOCKER_ARCH) -v $(PWD):/build $$TAG bash -c "trap 'chown -R --reference=. .' EXIT; export VERSION=$(VERSION) COMMIT=$(COMMIT) SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) && cd /build && make clean && make osd mode=$(mode)"
+	cp -a Makefile docker/src/
+	TAG="wfb-ng-osd:build-`date +%s`"; docker build --platform linux/$(DOCKER_ARCH) -t $$TAG docker --build-arg SRC_IMAGE=$(DOCKER_SRC_IMAGE) --build-arg QEMU_CPU=$(QEMU_CPU)  && \
+	docker run -i --rm --platform linux/$(DOCKER_ARCH) -v $(PWD):/build $$TAG bash -c "trap 'chown -R --reference=. .' EXIT; export VERSION=$(VERSION) COMMIT=$(COMMIT) SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) && cd /build && make clean && make deb mode=$(mode)"
 	docker image ls -q "wfb-ng-osd:build-*" | uniq | tail -n+6 | while read i ; do docker rmi -f $$i; done
 
+osd_docker: deb_docker
+
 clean:
-	rm -f osd.$(mode) *.o *~
+	rm -rf osd.{rockchip,gst,rpi3} deb_dist *.o *~
 	make -C fpv_video clean
 
