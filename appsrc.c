@@ -169,7 +169,7 @@ int gst_main(int rtp_port, char *codec, int rtp_jitter, osd_render_t osd_render,
                      rtp_port, codec + 1);
         }
 
-        char *codecs[] = { "nv%sdec", "avdec_%s" };
+        char *codecs[] = {"nv%sdec", "avdec_%s", "v4l2%sdec"};
         char *decoder = NULL;
 
         for(int i = 0; i < sizeof(codecs) / sizeof(codecs[0]); i++)
