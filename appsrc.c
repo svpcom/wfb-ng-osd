@@ -131,6 +131,11 @@ static const char* select_osd_render(osd_render_t osd_render)
             "clockoverlay text=GL valignment=center ! glimagesink" : \
             "glimagesink";
 
+    case OSD_RENDER_KMS:
+        return osd_debug ? \
+            "glcolorconvert ! gldownload ! clockoverlay text=Auto valignment=center ! kmssink" : \
+            "glcolorconvert ! gldownload ! kmssink";
+
     case OSD_RENDER_AUTO:
     default:
         return osd_debug ? \
