@@ -11,6 +11,7 @@ typedef enum
     OSD_RENDER_AUTO = 0,
     OSD_RENDER_XV,
     OSD_RENDER_GL,
+    OSD_RENDER_KMS,
 } osd_render_t;
 
 // Size of an array (num items.)
@@ -172,5 +173,3 @@ extern uint8_t* video_buf_ext;
 extern pthread_mutex_t video_mutex;
 
 #endif
-
-
