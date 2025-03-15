@@ -131,6 +131,11 @@ static const char* select_osd_render(osd_render_t osd_render)
             "clockoverlay text=GL valignment=center ! glimagesink" : \
             "glimagesink";
 
+    case OSD_RENDER_KMS:
+        return osd_debug ? \
+            "glcolorconvert ! gldownload ! clockoverlay text=Auto valignment=center ! kmssink" : \
+            "glcolorconvert ! gldownload ! kmssink";
+
     case OSD_RENDER_AUTO:
     default:
         return osd_debug ? \
@@ -169,7 +174,7 @@ int gst_main(int rtp_port, char *codec, int rtp_jitter, osd_render_t osd_render,
                      rtp_port, codec + 1);
         }
 
-        char *codecs[] = {"nv%sdec", "avdec_%s", "v4l2%sdec"};
+        char *codecs[] = {"nv%sdec", "v4l2%sdec", "avdec_%s"};
         char *decoder = NULL;
 
         for(int i = 0; i < sizeof(codecs) / sizeof(codecs[0]); i++)

@@ -100,7 +100,7 @@ int main(int argc, char **argv)
     int fd;
     struct pollfd fds[1];
 
-    while ((opt = getopt(argc, argv, "hdp:P:R:45j:xaw:")) != -1) {
+    while ((opt = getopt(argc, argv, "hdp:P:R:45j:xakw:")) != -1) {
         switch (opt) {
         case 'p':
             osd_port = atoi(optarg);
@@ -132,6 +132,10 @@ int main(int argc, char **argv)
 
         case 'a':
             osd_render = OSD_RENDER_AUTO;
+            break;
+
+        case 'k':
+            osd_render = OSD_RENDER_KMS;
             break;
 
         case 'w':
