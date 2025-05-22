@@ -42,3 +42,6 @@ Default RTP video port is UDP 5600.
 Screenshots:
 ------------
 ![px4](scr2.png)
+
+Wiki: [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/svpcom/wfb-ng-osd)
+------------
